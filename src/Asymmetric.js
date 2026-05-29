@@ -1,4 +1,4 @@
-
+import { useDataStore } from "./DataStoreProvider";
 import { Base64 } from 'js-base64';
 
 const arrayBufferToString = (buf) => {
@@ -121,20 +121,20 @@ const aad = (input) => {
   );
 };
 
-export const encryptSubmission = async (d) => {
+export const encryptSubmission = async (d, setData) => {
 
   // additional authentication data
   const haad      = aad([d.pubMaster, d.endpoint, 'submission']);
   
   const subtle    = window.crypto.subtle;
   
-  const keyPair   = await genAsymmetricKey(subtle);
+  let keyPair     = await genAsymmetricKey(subtle);
   
   const pubMJSON  = JSON.parse(unwrapString(d.pubMaster));
   
   const pubM      = await subtle.importKey('jwk', pubMJSON, 'X25519', false, []);
   
-  const sKey      = await deriveKey(pubM, keyPair.privateKey, subtle);
+  let sKey        = await deriveKey(pubM, keyPair.privateKey, subtle);
   
   // clean up data to save and convert it to a string
   const data      = JSON.parse(JSON.stringify(d)); // deep copy
@@ -148,11 +148,20 @@ export const encryptSubmission = async (d) => {
   
   const encData   = await encrypt(dataStr, sKey, haad, subtle);
   
+  sKey            = undefined;
+  
   const pubU      = wrapString(JSON.stringify(await subtle.exportKey('jwk', keyPair.publicKey)));
   
-  const toSave    = [pubU, encData].join('-');
+  keyPair         = undefined;
   
-  console.log(toSave);
+  const toSave    = [pubU, encData].join('-');
+    
+  setData({
+    ...d,
+    loading : false,
+    page    : 'thx',
+    encData : toSave,
+  });
 };
 
 // https://soatok.blog/2021/07/30/canonicalization-attacks-against-macs-and-signatures/#pae

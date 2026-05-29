@@ -6,6 +6,7 @@ import ForWhom from './ForWhom.jsx';
 import You from './You.jsx';
 import Them from './Them.jsx';
 import PageTwo from './PageTwo.jsx';
+import Thx from './Thx.jsx';
 import { useDataStore } from "./DataStoreProvider";
 
 
@@ -26,6 +27,9 @@ function Routing() {
   }
   else if ('two' === data.page) {
     return (<PageTwo />);
+  }
+  else if ('thx' === data.page) {
+    return (<Thx />);
   }
 }
 

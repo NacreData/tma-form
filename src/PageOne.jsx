@@ -9,7 +9,7 @@ function PageOne() {
     setData({
       ...data,
       impacted : {
-        ...data.user,
+        ...data.impacted,
         [event.target.name] : evt.target.value,
       },      
     }); 
@@ -19,7 +19,7 @@ function PageOne() {
     setData({
       ...data,
       impacted : {
-        ...data.user,
+        ...data.impacted,
         [field] : isChecked,
       },      
     }); 
@@ -29,7 +29,7 @@ function PageOne() {
     setData({
       ...data,
       impacted : {
-        ...data.user,
+        ...data.impacted,
         [field] : value,
       },      
     }); 

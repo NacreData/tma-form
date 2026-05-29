@@ -9,7 +9,7 @@ function Insurance() {
     setData({
       ...data,
       impacted : {
-        ...data.user,
+        ...data.impacted,
         [field] : value,
       },      
     }); 
@@ -20,7 +20,7 @@ function Insurance() {
       <section id="insurance">
         <Field.Root  p='8'>
           <Field.Label>
-            Does the impacted propoerty have renter insurance? 
+            Does the impacted propoerty have renter&rsquo;s insurance? 
           </Field.Label>
         </Field.Root>
         <RadioGroup.Root value={data.impacted.rentersInsurance} 
@@ -47,7 +47,7 @@ function Insurance() {
       <section id="insurance">
         <Field.Root  p='8'>
           <Field.Label>
-            Does the impacted propoerty have home insurance? 
+            Does the impacted property have home insurance? 
           </Field.Label>
         </Field.Root>
         <RadioGroup.Root value={data.impacted.homeInsurance} 
@@ -78,7 +78,7 @@ function Storm() {
     setData({
       ...data,
       impacted : {
-        ...data.user,
+        ...data.impacted,
         [event.target.name] : evt.target.value,
       },      
     }); 
@@ -107,7 +107,7 @@ function Flood() {
     setData({
       ...data,
       impacted : {
-        ...data.user,
+        ...data.impacted,
         [event.target.name] : evt.target.value,
       },      
     }); 
@@ -117,7 +117,7 @@ function Flood() {
     setData({
       ...data,
       impacted : {
-        ...data.user,
+        ...data.impacted,
         [field] : value,
       },      
     }); 
@@ -192,9 +192,11 @@ function Flood() {
                 <RadioGroup.ItemIndicator />
                 <RadioGroup.ItemText>Other:</RadioGroup.ItemText>
               </RadioGroup.Item>
-
+              
+              { ('other' === data.impacted.floodWhere) && 
               <Input placeholder="(fill in if choosing other)" name="otherFloodingWhere" 
                 value={data.impacted.otherFloodingWhere} onChange={textUpdate} w='90%' /> 
+              }
             </Flex>       
           </RadioGroup.Root>
         </section>    
@@ -213,7 +215,7 @@ function Snow() {
     setData({
       ...data,
       impacted : {
-        ...data.user,
+        ...data.impacted,
         [event.target.name] : evt.target.value,
       },      
     }); 
@@ -223,7 +225,7 @@ function Snow() {
     setData({
       ...data,
       impacted : {
-        ...data.user,
+        ...data.impacted,
         [field] : value,
       },      
     }); 
@@ -260,8 +262,10 @@ function Snow() {
                 <RadioGroup.ItemText>Other</RadioGroup.ItemText>
               </RadioGroup.Item>
 
+              { ('other' === data.impacted.shoveling) && 
               <Input placeholder="(fill in if choosing other)" name="otherShoveling" 
                 value={data.impacted.otherShoveling} onChange={textUpdate} w='90%' /> 
+              }
             </Flex>       
           </RadioGroup.Root>
         </section>        
@@ -279,7 +283,7 @@ function Heat() {
     setData({
       ...data,
       impacted : {
-        ...data.user,
+        ...data.impacted,
         [event.target.name] : evt.target.value,
       },      
     }); 
@@ -289,7 +293,7 @@ function Heat() {
     setData({
       ...data,
       impacted : {
-        ...data.user,
+        ...data.impacted,
         [field] : isChecked,
       },      
     }); 
@@ -347,8 +351,10 @@ function Heat() {
             <Checkbox.Label>Other:</Checkbox.Label>
           </Checkbox.Root>
 
+          { data.impacted.heatOther && 
           <Input placeholder="(fill in if choosing other)" name="heatOtherValue" 
-            value={data.impacted.heatOtherValue} onChange={textUpdate} ml='8' w='90%' />            
+            value={data.impacted.heatOtherValue} onChange={textUpdate} ml='8' w='90%' />  
+          }          
         </Flex>
       </section>
     );
@@ -365,7 +371,7 @@ function PageTwo() {
     setData({
       ...data,
       impacted : {
-        ...data.user,
+        ...data.impacted,
         [event.target.name] : evt.target.value,
       },      
     }); 
@@ -375,7 +381,7 @@ function PageTwo() {
     setData({
       ...data,
       impacted : {
-        ...data.user,
+        ...data.impacted,
         [field] : isChecked,
       },      
     }); 
@@ -385,7 +391,7 @@ function PageTwo() {
     setData({
       ...data,
       impacted : {
-        ...data.user,
+        ...data.impacted,
         [field] : value,
       },      
     }); 
@@ -397,14 +403,7 @@ function PageTwo() {
       loading : true,
     });
     
-    const encData = encryptSubmission(data);
-    
-    window.setTimeout(() => {
-      setData({
-        ...data,
-        loading : false,
-      });
-    }, 1000)
+    encryptSubmission(data, setData);
   };  
 
   return (
@@ -417,8 +416,8 @@ function PageTwo() {
             Does the impacted propoerty have flood insurance? 
           </Field.Label>
         </Field.Root>
-        <RadioGroup.Root value={data.impacted.homeInsurance} 
-          onValueChange={ (state) => radioUpdate('homeInsurance', state.value) }>
+        <RadioGroup.Root value={data.impacted.floodInsurance} 
+          onValueChange={ (state) => radioUpdate('floodInsurance', state.value) }>
           <Flex gap="4" direction="column" pl="8" mt="-5">
             <RadioGroup.Item key='yes' value='yes' placement="left">
               <RadioGroup.ItemHiddenInput />
@@ -441,7 +440,7 @@ function PageTwo() {
             The impacted property is a&hellip; 
           </Field.Label>
         </Field.Root>
-        <RadioGroup.Root value={data.impacted.homeInsurance} 
+        <RadioGroup.Root value={data.impacted.housingType} 
           onValueChange={ (state) => radioUpdate('housingType', state.value) }>
           <Flex gap="4" direction="column" pl="8" mt="-5">
             <RadioGroup.Item key='singleFamily' value='singleFamily' placement="left">
@@ -475,8 +474,10 @@ function PageTwo() {
               <RadioGroup.ItemText>Other:</RadioGroup.ItemText>
             </RadioGroup.Item>   
             
+            { ('other' === data.impacted.housingType) &&
             <Input placeholder="(fill in if choosing other)" name="otherHousingType" 
-              value={data.impacted.otherHousingType} onChange={textUpdate} w='90%' />            
+              value={data.impacted.otherHousingType} onChange={textUpdate} w='90%' />    
+            }         
           </Flex>       
         </RadioGroup.Root>
       </section>    
@@ -577,8 +578,10 @@ function PageTwo() {
             <Checkbox.Label>Other</Checkbox.Label>
           </Checkbox.Root>
           
+          { data.impacted.hasOtherNeed &&
           <Input placeholder="(fill in if choosing other)" name="otherNeed" 
-            value={data.impacted.otherNeed} onChange={textUpdate} ml='8' w='90%' />            
+            value={data.impacted.otherNeed} onChange={textUpdate} ml='8' w='90%' />      
+          }     
         </Flex>        
       </section>
       
@@ -638,8 +641,10 @@ function PageTwo() {
             <Checkbox.Label>Other:</Checkbox.Label>
           </Checkbox.Root>
 
+          { data.impacted.needOtherService &&
           <Input placeholder="(fill in if choosing other)" name="otherService" 
-            value={data.impacted.otherService} onChange={textUpdate} ml='8' w='90%' />            
+            value={data.impacted.otherService} onChange={textUpdate} ml='8' w='90%' /> 
+          }
         </Flex>      
       </section>
       

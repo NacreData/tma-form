@@ -1,4 +1,4 @@
-import { Field, RadioGroup, Flex, Button, Checkbox, Text } from "@chakra-ui/react"
+import { Field, RadioGroup, Flex, Button, Checkbox, Text, Box } from "@chakra-ui/react"
 import { useDataStore } from "./DataStoreProvider";
 import { RiArrowRightLine } from "react-icons/ri";
 // import { useEffect } from 'react';
@@ -29,6 +29,16 @@ function ForWhom() {
       [field] : isChecked,
     }); 
   };
+
+  const checkboxDisasterUpdate = (field, isChecked) => { 
+    setData({
+      ...data,
+      disaster : {
+        ...data.disaster, 
+        [field] : isChecked,
+      }
+    }); 
+  };
   
   const next = () => {
     setData({
@@ -40,7 +50,49 @@ function ForWhom() {
   return (
     <>
       <section id="for-whom">
-        <Flex direction="column">          
+        <Flex direction="column">        
+          <Box bg="bg" shadow="lg" borderRadius="lg" style={{textAlign: 'left'}} m='8' p='4'>
+            <Text size="lg">
+              For testers: The following bit would probably be done on the backend or 
+              perhaps in a different admin interface in real life, but for now, go ahead 
+              and choose which type of disaster we are dealing with for this form: 
+            </Text>
+            
+            <Checkbox.Root variant='outline' checked={data.disaster.flood}
+              onCheckedChange={ (state) => { checkboxDisasterUpdate("flood", state.checked); } }
+              justify="flex-start" pl="8" mt='4'>
+              <Checkbox.HiddenInput />
+              <Checkbox.Control />
+              <Checkbox.Label>Flood</Checkbox.Label>
+            </Checkbox.Root>
+
+            <Checkbox.Root variant='outline' checked={data.disaster.storm}
+              onCheckedChange={ (state) => { checkboxDisasterUpdate("storm", state.checked); } }
+              justify="flex-start" pl="8" mt='4'>
+              <Checkbox.HiddenInput />
+              <Checkbox.Control />
+              <Checkbox.Label>Storm</Checkbox.Label>
+            </Checkbox.Root>
+
+            <Checkbox.Root variant='outline' checked={data.disaster.snow}
+              onCheckedChange={ (state) => { checkboxDisasterUpdate("snow", state.checked); } }
+              justify="flex-start" pl="8" mt='4'>
+              <Checkbox.HiddenInput />
+              <Checkbox.Control />
+              <Checkbox.Label>Snow/Ice</Checkbox.Label>
+            </Checkbox.Root>
+
+            <Checkbox.Root variant='outline' checked={data.disaster.heat}
+              onCheckedChange={ (state) => { checkboxDisasterUpdate("heat", state.checked); } }
+              justify="flex-start" pl="8" mt='4'>
+              <Checkbox.HiddenInput />
+              <Checkbox.Control />
+              <Checkbox.Label>Heat</Checkbox.Label>
+            </Checkbox.Root>
+            
+          </Box>
+        
+          
           <p style={{textAlign: 'left', padding: 5}}>
             Disclaimer: Thank you for sharing what you need with us. We are a group of
             random individuals volunteering to support each other. We are not a non-profit

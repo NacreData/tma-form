@@ -15,9 +15,9 @@ export const empty = {
   contact   : "",
   disaster  : {
     flood : true,
-    storm : true,
-    snow  : true,
-    heat  : true,
+    storm : false,
+    snow  : false,
+    heat  : false,
   },
   user : {
     name               : "",
@@ -73,7 +73,7 @@ export const empty = {
   }
 };
 
-export default function DataStoreProvider({children}) {
+export default function DataStoreProvider({children}) {  
   const [data, setData] = useState(empty);
   
   return (
