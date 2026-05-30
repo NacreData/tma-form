@@ -11,3 +11,9 @@ npx @chakra-ui/cli snippet add
 cd tma-form
 git init
 ```
+
+The following script, run after building a production version (npm run build) makes it possible to host this code in a sub-directory. The thought is that we will make a new directory for each response. 
+
+```
+post-build.sh
+```
