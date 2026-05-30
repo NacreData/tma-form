@@ -20,7 +20,7 @@ function Insurance() {
       <section id="insurance">
         <Field.Root  p='8'>
           <Field.Label>
-            Does the impacted propoerty have renter&rsquo;s insurance? 
+            Does the impacted property have renter&rsquo;s insurance? 
           </Field.Label>
         </Field.Root>
         <RadioGroup.Root value={data.impacted.rentersInsurance} 
@@ -410,10 +410,11 @@ function PageTwo() {
     <>      
       <Insurance />
 
+      { data.disaster.flood &&
       <section id="flood-insurance">
         <Field.Root  p='8'>
           <Field.Label>
-            Does the impacted propoerty have flood insurance? 
+            Does the impacted property have flood insurance? 
           </Field.Label>
         </Field.Root>
         <RadioGroup.Root value={data.impacted.floodInsurance} 
@@ -433,6 +434,7 @@ function PageTwo() {
           </Flex>       
         </RadioGroup.Root>
       </section>    
+      }
 
       <section id="housingType">
         <Field.Root  p='8'>

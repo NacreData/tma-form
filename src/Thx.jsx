@@ -108,6 +108,12 @@ function Thx() {
             {data.encData}
         </Code>        
         
+        <Text mt='8'>
+          If you want to review or contribute to the project, it is on GitHub at:
+          &nbsp;<a style={{color:'teal'}} href="https://github.com/NacreData/tma-form">https://github.com/NacreData/tma-form</a>
+        </Text>
+      
+        
         <Button colorPalette="green" variant="solid" mt="8" onClick={next}>
           Start Over
         </Button> 
