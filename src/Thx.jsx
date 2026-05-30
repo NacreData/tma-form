@@ -77,7 +77,7 @@ function Thx() {
   };
   
   return (
-    <div style={{textAlign: 'left'}} mb='100'>
+    <div style={{textAlign: 'left'}}>
       <section id="thx">
         <Text textStyle="2xl">
           Thanks! We will get back to you as soon as we are able. If other offers of help
@@ -105,7 +105,7 @@ function Thx() {
         
         <Code colorPalette='green' variant="outline" mt='8' w='100%' 
           style={{maxWidth: '100%', overflow: 'wrap', overflowWrap: 'break-word'}}>
-            {data.encData}
+            {data.encData.replace(/(.{80})/g, "$1\n")}
         </Code>        
         
         <Text mt='8'>
@@ -117,6 +117,8 @@ function Thx() {
         <Button colorPalette="green" variant="solid" mt="8" onClick={next}>
           Start Over
         </Button> 
+        
+        <div style={{height: 150}}>&nbsp;</div>
         
       </section>
     </div>
