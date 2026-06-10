@@ -106,7 +106,10 @@ function ForWhom() {
             justify="flex-start" pl="8" mt='4'>
             <Checkbox.HiddenInput />
             <Checkbox.Control />
-            <Checkbox.Label>I acknowledge the limitations of this project.</Checkbox.Label>
+            <Checkbox.Label>
+              I acknowledge the limitations of this project. 
+              <span aria-hidden="true" className="chakra-field__requiredIndicator css-gp8wgo">*</span>
+            </Checkbox.Label>
           </Checkbox.Root>
           <Text fontWeight="light" style={{color: 'grey'}} mt='4'>
             (To get involved in providing aid, send us an email: <a href="mailto:info@trianglemutualaid.org">info@trianglemutualaid.org</a>. 
@@ -117,7 +120,8 @@ function ForWhom() {
       
         <Field.Root  p='8'>
           <Field.Label>
-            I am filling out this form for:
+            I am filling out this form for: 
+            <span aria-hidden="true" className="chakra-field__requiredIndicator css-gp8wgo">*</span>
           </Field.Label>
         </Field.Root>
         <RadioGroup.Root value={data.forWhom} 
@@ -142,6 +146,12 @@ function ForWhom() {
         disabled={("" === data.forWhom || !data.agree)}>
         Continue <RiArrowRightLine />
       </Button> 
+      
+      { ("" === data.forWhom || !data.agree) &&
+        <Text textStyle="sm" fontWeight="light" style={{color: "#ef4444"}} mt="3">
+          complete all required fields, marked with a red asterisk, to continue
+        </Text>
+      }
       
       <div style={{height: 150}}>
         &nbsp;

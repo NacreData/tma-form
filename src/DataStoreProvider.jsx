@@ -5,7 +5,7 @@ export const useDataStore = () => useContext(DataStore);
 
 export const empty = {
   pubMaster : "eyJjcnYiOiJYMjU1MTkiLCJleHQiOnRydWUsImtleV9vcHMiOltdLCJrdHkiOiJPS1AiLCJ4IjoiNEItTmdUVzY1clNrd3I1MXB0UkZPQnFnbnVjbjNBakFjQUVXbjBLeTdUMCJ9",
-  endpoint  : "",
+  endpoint  : "https://e56krwmvma.execute-api.us-east-1.amazonaws.com/0/",
   page      : "start",
   err       : false,
   loading   : false,
@@ -27,12 +27,18 @@ export const empty = {
     canText            : false,
     signal             : "",
     email              : "",
+    shareOK            : "",
   },
   impacted : {
     payment            : "",
     placeImpacted      : "",
+    impactedCity       : "",
+    impactedState      : "",
     housingType        : "",  
     placeSupport       : "",
+    supportCity        : "",
+    supportState       : "",
+    supportZip         : "",
     rentersInsurance   : "",
     homeInsurance      : "",
     floodInsurance     : "",

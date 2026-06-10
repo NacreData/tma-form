@@ -121,30 +121,30 @@ const aad = (input) => {
   );
 };
 
-export const encryptSubmission = async (d, setData) => {
+export const encryptSubmission = async (data, setData) => {
 
   // additional authentication data
-  const haad      = aad([d.pubMaster, d.endpoint, 'submission']);
+  const haad      = aad([data.pubMaster, data.endpoint, 'submission']);
   
   const subtle    = window.crypto.subtle;
   
   let keyPair     = await genAsymmetricKey(subtle);
   
-  const pubMJSON  = JSON.parse(unwrapString(d.pubMaster));
+  const pubMJSON  = JSON.parse(unwrapString(data.pubMaster));
   
   const pubM      = await subtle.importKey('jwk', pubMJSON, 'X25519', false, []);
   
   let sKey        = await deriveKey(pubM, keyPair.privateKey, subtle);
   
   // clean up data to save and convert it to a string
-  const data      = JSON.parse(JSON.stringify(d)); // deep copy
-  data.pubMaster  = undefined;
-  data.endpoint   = undefined;
-  data.page       = undefined;
-  data.err        = undefined; 
-  data.loading    = undefined;
+  const _d_d      = JSON.parse(JSON.stringify(data)); // deep copy
+  _d_d.pubMaster  = undefined;
+  _d_d.endpoint   = undefined;
+  _d_d.page       = undefined;
+  _d_d.err        = undefined; 
+  _d_d.loading    = undefined;
   
-  const dataStr   = JSON.stringify(data);
+  const dataStr   = JSON.stringify(_d_d);
   
   const encData   = await encrypt(dataStr, sKey, haad, subtle);
   
@@ -155,13 +155,29 @@ export const encryptSubmission = async (d, setData) => {
   keyPair         = undefined;
   
   const toSave    = [pubU, encData].join('-');
+  
+  const response  = await fetch(data.endpoint + 'submission', {
+                      method : "POST",
+                      body   : JSON.stringify({content: toSave})
+                    });
+                    
+  const ret       = await response.json();
+  
+  if ('OK' === ret.status) {
+    setData({
+      ...data,
+      loading : false,
+      page    : 'thx',
+    });  
+  }
+  else {
+    setData({
+      ...data,
+      loading : false,
+      err     : 'Error saving data to server. Please check internet connection and report persistent problem to info@trianglemutualaid.org',
+    });  
+  }
     
-  setData({
-    ...d,
-    loading : false,
-    page    : 'thx',
-    encData : toSave,
-  });
 };
 
 // https://soatok.blog/2021/07/30/canonicalization-attacks-against-macs-and-signatures/#pae

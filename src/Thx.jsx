@@ -1,5 +1,6 @@
 import { Text, Button, Code } from "@chakra-ui/react";
 import { useDataStore } from "./DataStoreProvider";
+import { useEffect } from "react";
 
 function Thx() {
   const { data, setData } = useDataStore();
@@ -72,23 +73,26 @@ function Thx() {
         heatOtherValue     : "",
         whatElse           : "",
       },
-      encData : "",  
     });
   };
+
+  useEffect(() => {
+    scroll(0,0);
+  }, []);
   
   return (
-    <div style={{textAlign: 'left'}}>
+    <div style={{textAlign: "left"}}>
       <section id="thx">
         <Text textStyle="2xl">
           Thanks! We will get back to you as soon as we are able. If other offers of help
           come up in the meantime, please do not hesitate to make use of them. If your 
-          needs or circumstance change, feel free to let us know by sending us an email at:
-          &nbsp;<a href="mailto:info@trianglemutualaid.org" style={{color: 'teal'}}>info@trianglemutualaid.org</a>
+          needs or circumstance change, let us know by email:
+          &nbsp;<a href="mailto:info@trianglemutualaid.org" style={{color: "teal"}}>info@trianglemutualaid.org</a>
         </Text>
       </section>
       
       <section id="development">
-        <Text mt='8'>
+        <Text mt="8">
           The "backend" is still under development - presumably this will be something like 
           a spreadsheet type view, as with Google Forms, though I am also thinking of adding 
           the ability to track a series of interactions between TMA people and those who 
@@ -98,19 +102,10 @@ function Thx() {
       </section>
       
       <section id="theData">
-        <Text mt='8'>
-          Here is what the data you just entered in the various pages of the form will look 
-          like when it is saved in the database -- all information is now end-to-end encrypted!!
-        </Text>
         
-        <Code colorPalette='green' variant="outline" mt='8' w='100%' 
-          style={{maxWidth: '100%', overflow: 'wrap', overflowWrap: 'break-word'}}>
-            {data.encData.replace(/(.{80})/g, "$1\n")}
-        </Code>        
-        
-        <Text mt='8'>
+        <Text mt="8">
           If you want to review or contribute to the project, it is on GitHub at:
-          &nbsp;<a style={{color:'teal'}} href="https://github.com/NacreData/tma-form">https://github.com/NacreData/tma-form</a>
+          &nbsp;<a style={{color:"teal"}} href="https://github.com/NacreData/tma-form">https://github.com/NacreData/tma-form</a>
         </Text>
       
         

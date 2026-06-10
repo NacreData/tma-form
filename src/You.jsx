@@ -1,6 +1,7 @@
-import { Field, Flex, Button, Input, RadioGroup, Checkbox } from "@chakra-ui/react";
+import { Field, Flex, Button, Input, RadioGroup, Checkbox, Text, Grid, GridItem } from "@chakra-ui/react";
 import { useDataStore } from "./DataStoreProvider";
 import { RiArrowRightLine } from "react-icons/ri";
+import { useEffect } from 'react';
 
 function Intro() {
   const { data, setData } = useDataStore();
@@ -44,9 +45,17 @@ function Next() {
           phone              : "",
           signal             : "",
           email              : "",
+          shareOK            : "",
         }
       })
     };  
+
+    const back = () => {
+      setData({
+        ...data,
+        page : 'start',
+      });
+    };
 
     return (
       <>
@@ -74,11 +83,25 @@ function Next() {
             </Flex>       
           </RadioGroup.Root>
         </section>
-       
-        <Button colorPalette="green" variant="solid" mt="8" mb="100" onClick={next}
-          disabled={("" === data.contact || "" === data.user.name)}>
-          Continue <RiArrowRightLine />
-        </Button> 
+        
+        <Grid templateColumns="repeat(2, 1fr)" gap={2} mt="8" mb="100">
+          <GridItem>
+            <Button colorPalette="grey" variant="solid" onClick={back}>Back</Button>
+          </GridItem>
+          <GridItem>
+            <Button colorPalette="green" variant="solid"  onClick={next}
+              disabled={("" === data.contact || "" === data.user.name)}>
+              Continue <RiArrowRightLine />
+            </Button> 
+          </GridItem>
+        </Grid>
+
+        { ("" === data.contact || "" === data.user.name) &&
+          <Text textStyle="sm" fontWeight="light" style={{color: "#ef4444"}} mt="3">
+            complete all required fields, marked with a red asterisk, to continue
+          </Text>
+        }
+
       </>
     );
   }
@@ -90,11 +113,77 @@ function Next() {
       });
     };  
     
+    const back = () => {
+      setData({
+        ...data,
+        page : 'start',
+      });
+    };
+
+    const shareUpdate = (field, value) => { 
+      setData({
+        ...data,
+        user : {
+          ...data.user,
+          [field] : value,
+        },
+      }); 
+    };
+    
     return (
-      <Button colorPalette="green" variant="solid" mt="8" mb="100" onClick={next}
-        disabled={("" === data.user.name)}>
-        Continue <RiArrowRightLine />
-      </Button> 
+      <>
+        <section id="share">
+          <Field.Root  p='8'>
+            <Field.Label>
+              <span aria-hidden="true" className="chakra-field__requiredIndicator css-gp8wgo" style={{flexFlow: "row wrap"}}>*</span>
+              Is it OK to share basic impact and contact info with government agencies and nonprofits?
+              This is entirely optional&mdash;government knowledge of where you live may put 
+              some people in danger, while being able to connect you to other resources and 
+              include your impacts for assessment of government-declared "states of emergency" 
+              may make more resources available: 
+            </Field.Label>
+            <Field.HelperText>
+              Information from this form is stored encrypted and is available only to vetted TMA 
+              volunteers.
+            </Field.HelperText>
+          </Field.Root>
+          <RadioGroup.Root value={data.user.shareOK} 
+            onValueChange={ (state) => shareUpdate('shareOK', state.value) }>
+            <Flex gap="4" direction="column" pl="8" mt="-5">
+              <RadioGroup.Item key='true' value={true} placement="left">
+                <RadioGroup.ItemHiddenInput />
+                <RadioGroup.ItemIndicator />
+                <RadioGroup.ItemText>Yes, sharing information for the purpose of aid is OK.</RadioGroup.ItemText>
+              </RadioGroup.Item>
+  
+              <RadioGroup.Item key='false' value={false} placement="left">
+                <RadioGroup.ItemHiddenInput />
+                <RadioGroup.ItemIndicator />
+                <RadioGroup.ItemText>Please keep my information confidential.</RadioGroup.ItemText>
+              </RadioGroup.Item>   
+            </Flex>       
+          </RadioGroup.Root>
+        </section>
+    
+        <Grid templateColumns="repeat(2, 1fr)" gap={2} mt="8" mb="100">
+          <GridItem>
+            <Button colorPalette="grey" variant="solid" onClick={back}>Back</Button>
+          </GridItem>
+          <GridItem>
+            <Button colorPalette="green" variant="solid" onClick={next}
+              disabled={("" === data.user.name || "" === data.user.shareOK)}>
+              Continue <RiArrowRightLine />
+            </Button>
+          </GridItem>
+        </Grid>
+
+        { ("" === data.user.name || "" === data.user.shareOK) &&
+          <Text textStyle="sm" fontWeight="light" style={{color: "#ef4444"}} mt="3">
+            complete all required fields, marked with a red asterisk, to continue
+          </Text>
+        }
+
+      </>
     );
   }
 }
@@ -128,6 +217,10 @@ function You() {
       },      
     }); 
   };
+  
+  useEffect(() => {
+    scroll(0,0);
+  }, []);
 
   return (
     <>

@@ -1,6 +1,7 @@
-import { Field, Flex, Button, Input, RadioGroup, Checkbox } from "@chakra-ui/react"
+import { Field, Flex, Button, Input, RadioGroup, Checkbox, Grid, GridItem } from "@chakra-ui/react";
 import { useDataStore } from "./DataStoreProvider";
 import { RiArrowRightLine } from "react-icons/ri";
+import { useEffect } from 'react';
 
 function ContactInfo() {
   const { data, setData } = useDataStore();
@@ -91,6 +92,16 @@ function Them() {
       },      
     }); 
   };
+  
+  const radioUpdate = (field, value) => { 
+    setData({
+      ...data,
+      them : {
+        ...data.them,
+        [field] : value,
+      }      
+    }); 
+  };  
 
   const next = () => {
     setData({
@@ -98,6 +109,17 @@ function Them() {
       page : 'one',
     });
   };  
+
+  const back = () => {
+    setData({
+      ...data,
+      page : 'you',
+    });
+  };
+
+  useEffect(() => {
+    scroll(0,0);
+  }, []);
 
   return (
     <>
@@ -139,12 +161,52 @@ function Them() {
       
       <ContactInfo />
 
-     
-      <Button colorPalette="green" variant="solid" mt="8" mb="100" onClick={next}
-        disabled={("" === data.them.name)}>
-        Continue <RiArrowRightLine />
-      </Button> 
-      
+      <section id="share">
+        <Field.Root  p='8'>
+          <Field.Label>
+            Is it OK to share basic impact and contact info for the impacted household
+            with government agencies and nonprofits? This is entirely
+            optional&mdash;government knowledge of where someone lives may put some people in
+            danger, while being able to connect them to other resources and include their
+            impacts for assessment of government-declared "states of emergency" may make
+            more resources available: 
+            <span aria-hidden="true" className="chakra-field__requiredIndicator css-gp8wgo">*</span>
+          </Field.Label>
+          <Field.HelperText>
+            Information from this form is stored encrypted and is available only to vetted TMA 
+            volunteers.
+          </Field.HelperText>
+        </Field.Root>
+        <RadioGroup.Root value={data.them.shareOK} 
+          onValueChange={ (state) => radioUpdate('shareOK', state.value) }>
+          <Flex gap="4" direction="column" pl="8" mt="-5">
+            <RadioGroup.Item key='true' value={true} placement="left">
+              <RadioGroup.ItemHiddenInput />
+              <RadioGroup.ItemIndicator />
+              <RadioGroup.ItemText>Yes, sharing information for the purpose of aid is OK.</RadioGroup.ItemText>
+            </RadioGroup.Item>
+
+            <RadioGroup.Item key='false' value={false} placement="left">
+              <RadioGroup.ItemHiddenInput />
+              <RadioGroup.ItemIndicator />
+              <RadioGroup.ItemText>Please keep household information confidential.</RadioGroup.ItemText>
+            </RadioGroup.Item>   
+          </Flex>       
+        </RadioGroup.Root>
+      </section>
+
+      <Grid templateColumns="repeat(2, 1fr)" gap={2} mt="8" mb="100">
+        <GridItem>
+          <Button colorPalette="grey" variant="solid" onClick={back}>Back</Button>
+        </GridItem>
+        <GridItem>
+          <Button colorPalette="green" variant="solid" onClick={next}
+            disabled={("" === data.them.name)}>
+            Continue <RiArrowRightLine />
+          </Button>
+        </GridItem>
+      </Grid>
+           
       <div style={{height: 150}}>
         &nbsp;
       </div>

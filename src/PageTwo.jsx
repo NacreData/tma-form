@@ -1,6 +1,8 @@
-import { Field, Input, Checkbox, RadioGroup, Flex, Button, Textarea } from "@chakra-ui/react"
+import { Field, Input, Checkbox, RadioGroup, Flex, Button, Textarea, Alert,
+  Grid, GridItem } from "@chakra-ui/react"
 import { useDataStore } from "./DataStoreProvider";
 import { encryptSubmission } from './Asymmetric.js';
+import { useEffect } from 'react';
 
 function Insurance() {
   const { data, setData } = useDataStore();
@@ -15,7 +17,10 @@ function Insurance() {
     }); 
   };
   
-  if ('rented' === data.impacted.housingOwnership) {  
+  if ("unhoused" === data.impacted.housingOwnership) {
+    return (<></>);
+  }
+  else if ('rented' === data.impacted.housingOwnership) {  
     return (
       <section id="insurance">
         <Field.Root  p='8'>
@@ -83,8 +88,11 @@ function Storm() {
       },      
     }); 
   };
-
-  if (data.disaster.storm) {
+  
+  if ("unhoused" === data.impacted.housingOwnership) {
+    return (<></>);
+  }
+  else if (data.disaster.storm) {
     return (
       <>
         <Field.Root  p='8'>
@@ -92,7 +100,7 @@ function Storm() {
             What is the nature of the storm damage on your property?
           </Field.Label>
         </Field.Root>
-        <Input placeholder="" name="stormDamage" ml='8' w='90%'
+        <Input placeholder="Water coming in? Tree blocking drive? Power out? No access to water? Etc." name="stormDamage" ml='8' w='90%'
             value={data.impacted.stormDamage} onChange={textUpdate} mb='8' />         
       </>
     );
@@ -123,7 +131,7 @@ function Flood() {
     }); 
   };
   
-  if (data.disaster.flood) {
+  if (data.disaster.flood && "unhoused" !== data.impacted.housingOwnership) {
     return (
       <>      
         <section id="floodAmount">
@@ -401,16 +409,29 @@ function PageTwo() {
     setData({
       ...data,
       loading : true,
+      err     : "",
     });
     
     encryptSubmission(data, setData);
+    // submission
   };  
+  
+  const back = () => {
+    setData({
+      ...data,
+      page : 'one',
+    });
+  };
+
+  useEffect(() => {
+    scroll(0,0);
+  }, []);
 
   return (
     <>      
       <Insurance />
 
-      { data.disaster.flood &&
+      { (data.disaster.flood && "unhoused" !== data.impacted.housingOwnership) &&
       <section id="flood-insurance">
         <Field.Root  p='8'>
           <Field.Label>
@@ -436,6 +457,7 @@ function PageTwo() {
       </section>    
       }
 
+      { "unhoused" !== data.impacted.housingOwnership &&
       <section id="housingType">
         <Field.Root  p='8'>
           <Field.Label>
@@ -482,7 +504,8 @@ function PageTwo() {
             }         
           </Flex>       
         </RadioGroup.Root>
-      </section>    
+      </section> 
+      }   
       
       <section id="needs">
         <Field.Root  p='8'>
@@ -669,10 +692,29 @@ function PageTwo() {
           name="whatElse" onChange={textUpdate}  />
       </section>
 
-      <Button colorPalette="green" variant="solid" mt="8" mb="100" onClick={next}
-        loading={data.loading} loadingText="Encrypting & Saving...">
-        Complete Form
-      </Button> 
+      <Grid templateColumns="repeat(2, 1fr)" gap={2} mt="8" mb="100">
+        <GridItem>
+          <Button colorPalette="grey" variant="solid" onClick={back}>Back</Button>
+        </GridItem>
+        <GridItem>
+          <Button colorPalette="green" variant="solid" onClick={next}
+            loading={data.loading} loadingText="Encrypting & Saving...">
+            Complete Form, Send Data
+          </Button>
+        </GridItem>
+      </Grid>
+
+      { data.err && 
+        <Alert.Root status="error">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Title>Error</Alert.Title>
+            <Alert.Description>
+              {data.err}
+            </Alert.Description>
+          </Alert.Content>
+        </Alert.Root>      
+      }
       
       <div style={{height: 150}}>
         &nbsp;

@@ -11,7 +11,7 @@ import { useDataStore } from "./DataStoreProvider";
 
 
 function Routing() {
-  const { data, setData } = useDataStore();
+  const { data } = useDataStore();
   
   if ('start' === data.page) {
     return (<ForWhom />);

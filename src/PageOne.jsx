@@ -1,6 +1,8 @@
-import { Field, Input, Checkbox, RadioGroup, VStack, Flex, Button } from "@chakra-ui/react"
+import { Field, Input, Checkbox, RadioGroup, VStack, Flex, Button, Text,
+  Grid, GridItem } from "@chakra-ui/react"
 import { useDataStore } from "./DataStoreProvider";
 import { RiArrowRightLine } from "react-icons/ri";
+import { useEffect } from 'react';
 
 function PageOne() {
   const { data, setData } = useDataStore();
@@ -42,6 +44,24 @@ function PageOne() {
     });
   };  
   
+  const back = () => {
+    if ('them' === data.forWhom) {
+      setData({
+        ...data,
+        page : 'them',
+      });
+    }
+    else {
+      setData({
+        ...data,
+        page : 'you',
+      });
+    }
+  };
+  
+  useEffect(() => {
+    scroll(0,0);
+  }, []);
 
   return (
     <>      
@@ -60,21 +80,71 @@ function PageOne() {
           <Field.Label>
             What is the address of the place impacted by the disaster?
           </Field.Label>
-          <Input placeholder="place impacted" name="placeImpacted" value={data.impacted.placeImpacted} 
-            onChange={textUpdate} />
+          
+          <Grid templateRows="repeat(2, 1fr)"
+            templateColumns="repeat(5, 1fr)"
+            gap={2}>
+          
+            <GridItem colSpan={5}>
+              <Input placeholder="street address" name="placeImpacted" value={data.impacted.placeImpacted} 
+              onChange={textUpdate} />
+            </GridItem>
+            
+            <GridItem colSpan={3}>
+              <Input placeholder="town or city" name="impactedCity" value={data.impacted.impactedCity} 
+              onChange={textUpdate} />
+            </GridItem>
+            
+            <GridItem>
+              <Input placeholder="state" name="impactedState" value={data.impacted.impactedState} 
+              onChange={textUpdate} />
+            </GridItem>
+            
+            <GridItem>
+              &nbsp; 
+            </GridItem>
+
+          </Grid>
         </Field.Root>
       </section>
+
+
+
 
       <section id="support-address">
         <Field.Root  p='8'>
           <Field.Label>
             At what address can supplies/support be received?
           </Field.Label>
-          <Input placeholder="place to receive support" name="placeSupport" 
-            value={data.impacted.placeSupport} onChange={textUpdate} />
+          
+          <Grid templateRows="repeat(2, 1fr)"
+            templateColumns="repeat(5, 1fr)"
+            gap={2}>
+            
+            <GridItem colSpan={5}>
+              <Input placeholder="street address" name="placeSupport" 
+              value={data.impacted.placeSupport} onChange={textUpdate} />
+            </GridItem>
+            
+            <GridItem colSpan={3}>
+              <Input placeholder="city" name="supportCity" 
+              value={data.impacted.supportCity} onChange={textUpdate} />
+            </GridItem>
+            
+            <GridItem>
+              <Input placeholder="state" name="supportState" 
+              value={data.impacted.supportState} onChange={textUpdate} />
+            </GridItem>
+            
+            <GridItem>
+              <Input placeholder="zip" name="supportZip" 
+              value={data.impacted.supportZip} onChange={textUpdate} />
+            </GridItem>
+            
+          </Grid>
         </Field.Root>
       </section>
-
+      
       <section id="housing-type">
         <Field.Root  p='8'>
           <Field.Label>
@@ -96,14 +166,33 @@ function PageOne() {
               <RadioGroup.ItemIndicator />
               <RadioGroup.ItemText>Owned by the occupant</RadioGroup.ItemText>
             </RadioGroup.Item>   
+            
+            <RadioGroup.Item key='unhoused' value='unhoused' placement="left">
+              <RadioGroup.ItemHiddenInput />
+              <RadioGroup.ItemIndicator />
+              <RadioGroup.ItemText>Impacted person/people were unhoused prior to this disaster</RadioGroup.ItemText>
+            </RadioGroup.Item>               
           </Flex>       
         </RadioGroup.Root>
       </section>
 
-      <Button colorPalette="green" variant="solid" mt="8" mb="100" onClick={next}
-        disabled={("" === data.impacted.housingOwnership)}>
-        Continue <RiArrowRightLine />
-      </Button> 
+      <Grid templateColumns="repeat(2, 1fr)" gap={2} mt="8" mb="100">
+        <GridItem>
+          <Button colorPalette="grey" variant="solid" onClick={back}>Back</Button>
+        </GridItem>
+        <GridItem>
+          <Button colorPalette="green" variant="solid" onClick={next}
+            disabled={("" === data.impacted.housingOwnership)}>
+            Continue <RiArrowRightLine />
+          </Button>
+        </GridItem>
+      </Grid>
+
+      { ("" === data.impacted.housingOwnership) &&
+        <Text textStyle="sm" fontWeight="light" style={{color: "#ef4444"}} mt="3">
+          complete all required fields, marked with a red asterisk, to continue
+        </Text>
+      }
       
       <div style={{height: 150}}>
         &nbsp;
