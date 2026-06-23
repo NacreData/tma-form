@@ -14,17 +14,17 @@ const stringToArrayBuffer = (str) => {
     return bufView;
 };
 
-const wrapString = (str) => {
+export const wrapString = (str) => {
   return Base64.encode(str);
 };
 
-const unwrapString = (str) => {
+export const unwrapString = (str) => {
   return Base64.decode(str);
 };
 
-const wrap = (buf) => { return wrapString(arrayBufferToString(buf)); }
+export const wrap = (buf) => { return wrapString(arrayBufferToString(buf)); }
 
-const unwrap = (str) => { return stringToArrayBuffer(unwrapString(str)); }
+export const unwrap = (str) => { return stringToArrayBuffer(unwrapString(str)); }
 
 const genAsymmetricKey = async (subtle) => {
   const keyPair = await subtle.generateKey('X25519', true, ['deriveKey',]);
@@ -98,14 +98,14 @@ const decrypt = async (str, key, auth, subtle=window.crypto.subtle) => {
   }  
 };
 
-const ndhash = async (pwd, len=16, salt=false) => {
+export const ndhash = async (pwd, len=16, salt=false) => {
   const s = salt ? unwrap(salt) : window.crypto.getRandomValues(new Uint8Array(16));
   const h = await argon2.hash({ pass: pwd, salt: s, time: 11, mem: 4096, hashLen: len, type: 'Argon2id' });
   
   return [s, h.hash];
 };
 
-const passKey = async (pass, salt=false) => {
+export const passKey = async (pass, salt=false) => {
   const [s, h] = await ndhash(pass, 32, salt);  
   const k      = await window.crypto.subtle.importKey("raw", h, "AES-GCM", true, [
     "encrypt",
@@ -121,13 +121,50 @@ const aad = (input) => {
   );
 };
 
+export const passEncryptPrivate = async (pass, username, priv, pubMaster, endpoint) => {
+  let [passSalt, pKey]  = await passKey(pass);
+  const haad            = aad([pubMaster, endpoint, username, 'key']);
+  const subtle          = window.crypto.subtle;
+  const passEncPrivKey  = await encrypt(priv, pKey, haad, subtle);
+  
+  pKey = undefined;
+  priv = undefined;
+  
+  console.log(`password Salt: ${passSalt}`);
+  console.log(`encrypted Private Key: ${passEncPrivKey}`);
+};
+
+export const passDecryptPrivate = async (priv, pkey, pubMaster, endpoint, username) => {
+  const haad            = aad([pubMaster, endpoint, username, 'key']);
+  const subtle          = window.crypto.subtle;
+  const wrapedPriv      = await decrypt(priv, pkey, haad, subtle);
+  const privJSON        = JSON.parse(unwrapString(wrapedPriv));
+  const privK           = await subtle.importKey('jwk', privJSON, 'X25519', false, ["deriveKey"]);
+  return privK;
+};
+
+export const decryptSubmission = async (ePrivKey, pkey, pubMaster, endpoint, username, content) => {
+  let privM       = await passDecryptPrivate(ePrivKey, pkey, pubMaster, endpoint, username);
+  const haad      = aad([pubMaster, endpoint, 'submission']);  
+  const subtle    = window.crypto.subtle;
+  const [wrappedPubU, wrappedIV, wrappedStr] = content.split('-');
+  const pubUJSON  = JSON.parse(unwrapString(wrappedPubU)); 
+  const pubU      = await subtle.importKey('jwk', pubUJSON, 'X25519', false, []);
+  let sKey        = await deriveKey(pubU, privM, subtle);
+  privM           = undefined;
+  const dcontent  = await decrypt([wrappedIV, wrappedStr].join('-'), sKey, haad, subtle);
+  sKey            = undefined;
+  
+  return dcontent;
+};
+
 export const encryptSubmission = async (data, setData) => {
 
   // additional authentication data
   const haad      = aad([data.pubMaster, data.endpoint, 'submission']);
   
   const subtle    = window.crypto.subtle;
-  
+
   let keyPair     = await genAsymmetricKey(subtle);
   
   const pubMJSON  = JSON.parse(unwrapString(data.pubMaster));

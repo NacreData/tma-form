@@ -3,11 +3,19 @@ import { useDataStore } from "./DataStoreProvider";
 import { RiArrowRightLine } from "react-icons/ri";
 // import { useEffect } from 'react';
 // import { makeMaster } from './Asymmetric.js';
+// import { passEncryptPrivate } from './Asymmetric.js';
 
 function ForWhom() {
   const { data, setData } = useDataStore();
   
-  
+//   useEffect(() => {
+//     passEncryptPrivate(
+//       '[password]', 
+//       '[username]', 
+//       '[private key]',
+//       data.pubMaster, data.endpoint
+//     );
+//   }, []);
   
 //   useEffect(() => {
 //     makeMaster();
@@ -46,6 +54,13 @@ function ForWhom() {
       page : 'you',
     });
   };  
+  
+  const admin = () => {
+    setData({
+      ...data,
+      page : 'login'
+    });
+  };
 
   return (
     <>
@@ -153,7 +168,15 @@ function ForWhom() {
         </Text>
       }
       
-      <div style={{height: 150}}>
+      <div style={{height: 100}}>
+        &nbsp;
+      </div>
+      
+      <Button colorPalette="gray" variant="outline" mt="8" mb="100" onClick={admin}>
+        Admin Login <RiArrowRightLine />
+      </Button> 
+      
+      <div style={{height: 100}}>
         &nbsp;
       </div>
     </>  

@@ -103,6 +103,16 @@ function Them() {
     }); 
   };  
 
+  const checkboxUpdate = (field, isChecked) => { 
+    setData({
+      ...data,
+      user : {
+        ...data.user,
+        [field] : isChecked,
+      },      
+    }); 
+  };
+  
   const next = () => {
     setData({
       ...data,
@@ -141,11 +151,38 @@ function Them() {
       <section id="language">
         <Field.Root p='8'>
           <Field.Label>
-            Primary Language
+            Primary Language <span aria-hidden="true" className="chakra-field__requiredIndicator css-gp8wgo" style={{flexFlow: "row wrap"}}>*</span>
           </Field.Label>
-          <Input placeholder="Enter the language they are most comfortable speaking and reading" 
-            name="primaryLanguage" value={data.them.primaryLanguage} onChange={textUpdate} />
         </Field.Root>
+
+        <RadioGroup.Root value={data.them.primaryLanguage} 
+          onValueChange={ (lang) => radioUpdate('primaryLanguage', lang.value) }>
+          <Flex gap="4" direction="row" pl="8" mt="-5">
+            <RadioGroup.Item key='en' value='English' placement="left">
+              <RadioGroup.ItemHiddenInput />
+              <RadioGroup.ItemIndicator />
+              <RadioGroup.ItemText>English</RadioGroup.ItemText>
+            </RadioGroup.Item>
+
+            <RadioGroup.Item key='es' value='Spanish' placement="left">
+              <RadioGroup.ItemHiddenInput />
+              <RadioGroup.ItemIndicator />
+              <RadioGroup.ItemText>Spanish</RadioGroup.ItemText>
+            </RadioGroup.Item>   
+
+            <RadioGroup.Item key='other' value='Other' placement="left">
+              <RadioGroup.ItemHiddenInput />
+              <RadioGroup.ItemIndicator />
+              <RadioGroup.ItemText>Other</RadioGroup.ItemText>
+            </RadioGroup.Item>   
+          </Flex>       
+        </RadioGroup.Root>
+        
+        { ("Other" === data.them.primaryLanguage) &&
+          <Input placeholder="primary language" value={data.them.otherPrimaryLang} 
+            onChange={textUpdate} name="otherPrimaryLang" m="8" />
+        }
+
       </section>
 
       <section id="other-languages">
@@ -153,9 +190,38 @@ function Them() {
           <Field.Label>
             They also know the following languages:
           </Field.Label>
-          <Input placeholder="Other languages they are comfortable speaking and reading"
-            name="secondaryLanguages" value={data.them.secondaryLanguages} onChange={textUpdate} />
         </Field.Root>
+
+        <Flex align="start">
+          <Checkbox.Root variant='outline' checked={data.them.secondaryEnglish}  mb='8'
+            onCheckedChange={ (lang) => { checkboxUpdate("secondaryEnglish", lang.checked); } }
+            justify="flex-start" pl="8">
+            <Checkbox.HiddenInput />
+            <Checkbox.Control />
+            <Checkbox.Label>English</Checkbox.Label>
+          </Checkbox.Root>
+
+          <Checkbox.Root variant='outline' checked={data.them.secondarySpanish}  mb='8'
+            onCheckedChange={ (lang) => { checkboxUpdate("secondarySpanish", lang.checked); } }
+            justify="flex-start" pl="8">
+            <Checkbox.HiddenInput />
+            <Checkbox.Control />
+            <Checkbox.Label>Spanish</Checkbox.Label>
+          </Checkbox.Root>
+
+          <Checkbox.Root variant='outline' checked={data.them.secondaryOther}  mb='8'
+            onCheckedChange={ (lang) => { checkboxUpdate("secondaryOther", lang.checked); } }
+            justify="flex-start" pl="8">
+            <Checkbox.HiddenInput />
+            <Checkbox.Control />
+            <Checkbox.Label>Other</Checkbox.Label>
+          </Checkbox.Root>
+
+        </Flex>
+        { data.them.secondaryOther && 
+        <Input placeholder="Other languages you are comfortable speaking and reading" ml="8" mr="8"
+          name="secondaryOtherLang" value={data.them.secondaryOtherLang} onChange={textUpdate} />        
+        }
       </section>
 
       
@@ -164,17 +230,16 @@ function Them() {
       <section id="share">
         <Field.Root  p='8'>
           <Field.Label>
-            Is it OK to share basic impact and contact info for the impacted household
-            with government agencies and nonprofits? This is entirely
-            optional&mdash;government knowledge of where someone lives may put some people in
-            danger, while being able to connect them to other resources and include their
-            impacts for assessment of government-declared "states of emergency" may make
-            more resources available: 
-            <span aria-hidden="true" className="chakra-field__requiredIndicator css-gp8wgo">*</span>
+            <strong><span aria-hidden="true" className="chakra-field__requiredIndicator css-gp8wgo" style={{flexFlow: "row wrap"}}>*</span> PRIVACY INFORMATION</strong> 
           </Field.Label>
-          <Field.HelperText>
-            Information from this form is stored encrypted and is available only to vetted TMA 
-            volunteers.
+          <Field.HelperText style={{textAlign: 'left'}}>
+            <p>Information sharing is optional. By default, all information is stored on an encrypted platform
+            and is only available to vetted Triangle Mutual Aid volunteers.</p>
+            <p>Government knowledge of where the impacted people live may 
+            sometimes put people in danger. However, if they want to be connected to some nonprofit and government agency
+            resources, they may be required to share the information. </p><br />
+            <p>Government agencies may wish to use reported information related to property damage and 
+            ownership in assessing criteria for government-declared "states of emergency".</p>
           </Field.HelperText>
         </Field.Root>
         <RadioGroup.Root value={data.them.shareOK} 
@@ -183,13 +248,13 @@ function Them() {
             <RadioGroup.Item key='true' value={true} placement="left">
               <RadioGroup.ItemHiddenInput />
               <RadioGroup.ItemIndicator />
-              <RadioGroup.ItemText>Yes, sharing information for the purpose of aid is OK.</RadioGroup.ItemText>
+              <RadioGroup.ItemText>Yes, you may share the information with government disaster agencies and nonprofits.</RadioGroup.ItemText>
             </RadioGroup.Item>
 
             <RadioGroup.Item key='false' value={false} placement="left">
               <RadioGroup.ItemHiddenInput />
               <RadioGroup.ItemIndicator />
-              <RadioGroup.ItemText>Please keep household information confidential.</RadioGroup.ItemText>
+              <RadioGroup.ItemText>No, keep the information confidential.</RadioGroup.ItemText>
             </RadioGroup.Item>   
           </Flex>       
         </RadioGroup.Root>
@@ -201,7 +266,7 @@ function Them() {
         </GridItem>
         <GridItem>
           <Button colorPalette="green" variant="solid" onClick={next}
-            disabled={("" === data.them.name)}>
+            disabled={("" === data.them.name || "" === data.them.primaryLanguage || "" === data.them.shareOK)}>
             Continue <RiArrowRightLine />
           </Button>
         </GridItem>

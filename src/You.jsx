@@ -41,7 +41,11 @@ function Next() {
         them : {
           name               : "",
           primaryLanguage    : "",
-          secondaryLanguages : "",
+          otherPrimaryLang   : "",
+          secondaryEnglish   : "",
+          secondarySpanish   : "",
+          secondaryOther     : "",
+          secondaryOtherLang : "",
           phone              : "",
           signal             : "",
           email              : "",
@@ -49,6 +53,7 @@ function Next() {
         }
       })
     };  
+
 
     const back = () => {
       setData({
@@ -90,7 +95,7 @@ function Next() {
           </GridItem>
           <GridItem>
             <Button colorPalette="green" variant="solid"  onClick={next}
-              disabled={("" === data.contact || "" === data.user.name)}>
+              disabled={("" === data.contact || "" === data.user.name || "" === data.user.primaryLanguage)}>
               Continue <RiArrowRightLine />
             </Button> 
           </GridItem>
@@ -135,16 +140,16 @@ function Next() {
         <section id="share">
           <Field.Root  p='8'>
             <Field.Label>
-              <span aria-hidden="true" className="chakra-field__requiredIndicator css-gp8wgo" style={{flexFlow: "row wrap"}}>*</span>
-              Is it OK to share basic impact and contact info with government agencies and nonprofits?
-              This is entirely optional&mdash;government knowledge of where you live may put 
-              some people in danger, while being able to connect you to other resources and 
-              include your impacts for assessment of government-declared "states of emergency" 
-              may make more resources available: 
+              <strong><span aria-hidden="true" className="chakra-field__requiredIndicator css-gp8wgo" style={{flexFlow: "row wrap"}}>*</span> PRIVACY INFORMATION</strong> 
             </Field.Label>
-            <Field.HelperText>
-              Information from this form is stored encrypted and is available only to vetted TMA 
-              volunteers.
+            <Field.HelperText style={{textAlign: 'left'}}>
+              <p>Information sharing is optional. By default, all information is stored on an encrypted platform
+              and is only available to vetted Triangle Mutual Aid volunteers.</p>
+              <p>Government knowledge of where you live may put 
+              some people in danger. However, if you want to be connected to some nonprofit and government agency
+              resources, you may be required to share your information. </p><br />
+              <p>Government agencies may wish to use reported information related to property damage and 
+              ownership in assessing criteria for government-declared "states of emergency".</p>
             </Field.HelperText>
           </Field.Root>
           <RadioGroup.Root value={data.user.shareOK} 
@@ -153,13 +158,13 @@ function Next() {
               <RadioGroup.Item key='true' value={true} placement="left">
                 <RadioGroup.ItemHiddenInput />
                 <RadioGroup.ItemIndicator />
-                <RadioGroup.ItemText>Yes, sharing information for the purpose of aid is OK.</RadioGroup.ItemText>
+                <RadioGroup.ItemText>Yes, you may share my information with government disaster agencies and nonprofits.</RadioGroup.ItemText>
               </RadioGroup.Item>
   
               <RadioGroup.Item key='false' value={false} placement="left">
                 <RadioGroup.ItemHiddenInput />
                 <RadioGroup.ItemIndicator />
-                <RadioGroup.ItemText>Please keep my information confidential.</RadioGroup.ItemText>
+                <RadioGroup.ItemText>No, keep my information confidential.</RadioGroup.ItemText>
               </RadioGroup.Item>   
             </Flex>       
           </RadioGroup.Root>
@@ -171,7 +176,7 @@ function Next() {
           </GridItem>
           <GridItem>
             <Button colorPalette="green" variant="solid" onClick={next}
-              disabled={("" === data.user.name || "" === data.user.shareOK)}>
+              disabled={("" === data.user.name || "" === data.user.shareOK || "" === data.user.primaryLanguage)}>
               Continue <RiArrowRightLine />
             </Button>
           </GridItem>
@@ -221,6 +226,16 @@ function You() {
   useEffect(() => {
     scroll(0,0);
   }, []);
+  
+  const radioUserUpdate = (e, f) => {
+    setData({
+      ...data,
+      user : {
+        ...data.user,
+        [e] : f,
+      }
+    });
+  }
 
   return (
     <>
@@ -237,24 +252,80 @@ function You() {
         </Field.Root>
       </section>
 
-      <section id="language">
-        <Field.Root p='8'>
+      <section id="primary-langugae">
+        <Field.Root required p='8'>
           <Field.Label>
-            Your Primary Language
+            Your Primary Language <Field.RequiredIndicator />
           </Field.Label>
-          <Input placeholder="Enter the language you are most comfortable speaking and reading" 
-            name="primaryLanguage" value={data.user.primaryLanguage} onChange={textUpdate} />
         </Field.Root>
-      </section>
+        <RadioGroup.Root value={data.user.primaryLanguage} 
+          onValueChange={ (lang) => radioUserUpdate('primaryLanguage', lang.value) }>
+          <Flex gap="4" direction="row" pl="8" mt="-5">
+            <RadioGroup.Item key='en' value='English' placement="left">
+              <RadioGroup.ItemHiddenInput />
+              <RadioGroup.ItemIndicator />
+              <RadioGroup.ItemText>English</RadioGroup.ItemText>
+            </RadioGroup.Item>
 
+            <RadioGroup.Item key='es' value='Spanish' placement="left">
+              <RadioGroup.ItemHiddenInput />
+              <RadioGroup.ItemIndicator />
+              <RadioGroup.ItemText>Spanish</RadioGroup.ItemText>
+            </RadioGroup.Item>   
+
+            <RadioGroup.Item key='other' value='Other' placement="left">
+              <RadioGroup.ItemHiddenInput />
+              <RadioGroup.ItemIndicator />
+              <RadioGroup.ItemText>Other</RadioGroup.ItemText>
+            </RadioGroup.Item>   
+          </Flex>       
+        </RadioGroup.Root>
+        
+        { ("Other" === data.user.primaryLanguage) &&
+          <Input placeholder="primary language" value={data.user.otherPrimaryLang} 
+            onChange={textUpdate} name="otherPrimaryLang" m="8" />
+        }
+        
+      </section>
+      
       <section id="other-languages">
         <Field.Root  p='8'>
           <Field.Label>
             I also know the following languages:
           </Field.Label>
-          <Input placeholder="Other languages you are comfortable speaking and reading"
-            name="secondaryLanguages" value={data.user.secondaryLanguages} onChange={textUpdate} />
         </Field.Root>
+          
+        <Flex align="start">
+          <Checkbox.Root variant='outline' checked={data.user.secondaryEnglish}  mb='8'
+            onCheckedChange={ (lang) => { checkboxUpdate("secondaryEnglish", lang.checked); } }
+            justify="flex-start" pl="8">
+            <Checkbox.HiddenInput />
+            <Checkbox.Control />
+            <Checkbox.Label>English</Checkbox.Label>
+          </Checkbox.Root>
+
+          <Checkbox.Root variant='outline' checked={data.user.secondarySpanish}  mb='8'
+            onCheckedChange={ (lang) => { checkboxUpdate("secondarySpanish", lang.checked); } }
+            justify="flex-start" pl="8">
+            <Checkbox.HiddenInput />
+            <Checkbox.Control />
+            <Checkbox.Label>Spanish</Checkbox.Label>
+          </Checkbox.Root>
+
+          <Checkbox.Root variant='outline' checked={data.user.secondaryOther}  mb='8'
+            onCheckedChange={ (lang) => { checkboxUpdate("secondaryOther", lang.checked); } }
+            justify="flex-start" pl="8">
+            <Checkbox.HiddenInput />
+            <Checkbox.Control />
+            <Checkbox.Label>Other</Checkbox.Label>
+          </Checkbox.Root>
+
+        </Flex>
+        { data.user.secondaryOther && 
+        <Input placeholder="Other languages you are comfortable speaking and reading" ml="8" mr="8"
+          name="secondaryOtherLang" value={data.user.secondaryOtherLang} onChange={textUpdate} />
+        
+        }
       </section>
 
       <section id="phone">

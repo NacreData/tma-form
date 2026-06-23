@@ -457,6 +457,78 @@ function PageTwo() {
       </section>    
       }
 
+      <section id="impacted-address">
+        <Field.Root  p='8'>
+          <Field.Label>
+            {
+              ("unhoused" == data.impacted.housingOwnership) ?
+              <>Approximately where were you staying when the disaster occured?</> :
+              <>What is the address of the place impacted by the disaster?</>
+            }
+          </Field.Label>
+          
+          <Grid templateRows="repeat(2, 1fr)"
+            templateColumns="repeat(5, 1fr)"
+            gap={2}>
+          
+            <GridItem colSpan={5}>
+              <Input placeholder="street address" name="placeImpacted" value={data.impacted.placeImpacted} 
+              onChange={textUpdate} />
+            </GridItem>
+            
+            <GridItem colSpan={3}>
+              <Input placeholder="town or city" name="impactedCity" value={data.impacted.impactedCity} 
+              onChange={textUpdate} />
+            </GridItem>
+            
+            <GridItem>
+              <Input placeholder="state" name="impactedState" value={data.impacted.impactedState} 
+              onChange={textUpdate} />
+            </GridItem>
+            
+            <GridItem>
+              <Input placeholder="zip" name="supportZip" 
+              value={data.impacted.impactedZip} onChange={textUpdate} />
+            </GridItem>
+          </Grid>
+        </Field.Root>
+      </section>
+
+      <section id="support-address">
+        <Field.Root  p='8'>
+          <Field.Label>
+            At what address can supplies/support be received?
+          </Field.Label>
+          
+          <Grid templateRows="repeat(2, 1fr)"
+            templateColumns="repeat(5, 1fr)"
+            gap={2}>
+            
+            <GridItem colSpan={5}>
+              <Input placeholder="street address" name="placeSupport" 
+              value={data.impacted.placeSupport} onChange={textUpdate} />
+            </GridItem>
+            
+            <GridItem colSpan={3}>
+              <Input placeholder="city" name="supportCity" 
+              value={data.impacted.supportCity} onChange={textUpdate} />
+            </GridItem>
+            
+            <GridItem>
+              <Input placeholder="state" name="supportState" 
+              value={data.impacted.supportState} onChange={textUpdate} />
+            </GridItem>
+            
+            <GridItem>
+              <Input placeholder="zip" name="supportZip" 
+              value={data.impacted.supportZip} onChange={textUpdate} />
+            </GridItem>           
+          </Grid>
+        </Field.Root>       
+      </section>
+
+
+
       { "unhoused" !== data.impacted.housingOwnership &&
       <section id="housingType">
         <Field.Root  p='8'>
