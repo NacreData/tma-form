@@ -80,7 +80,7 @@ const decrypt = async (str, key, auth, subtle=window.crypto.subtle) => {
   const [wrappedIV, wrappedStr] = str.split('-');
   
   const iv     = unwrap(wrappedIV);
-  
+    
   const buff   = await subtle.decrypt({ 
     name           : 'AES-GCM', 
     iv             : iv, 
@@ -117,13 +117,13 @@ export const passKey = async (pass, salt=false) => {
 
 const aad = (input) => {
   return PAE(
-    input.concat( [window.location.host, window.location.href, 'tma-form',] )
+    input.concat( ['tma-form',] )
   );
 };
 
-export const passEncryptPrivate = async (pass, username, priv, pubMaster, endpoint) => {
+export const passEncryptPrivate = async (pass, username, priv, pubMaster) => {
   let [passSalt, pKey]  = await passKey(pass);
-  const haad            = aad([pubMaster, endpoint, username, 'key']);
+  const haad            = aad([pubMaster, username, 'key']);
   const subtle          = window.crypto.subtle;
   const passEncPrivKey  = await encrypt(priv, pKey, haad, subtle);
   
@@ -134,8 +134,8 @@ export const passEncryptPrivate = async (pass, username, priv, pubMaster, endpoi
   console.log(`encrypted Private Key: ${passEncPrivKey}`);
 };
 
-export const passDecryptPrivate = async (priv, pkey, pubMaster, endpoint, username) => {
-  const haad            = aad([pubMaster, endpoint, username, 'key']);
+export const passDecryptPrivate = async (priv, pkey, pubMaster, username) => {
+  const haad            = aad([pubMaster, username, 'key']);
   const subtle          = window.crypto.subtle;
   const wrapedPriv      = await decrypt(priv, pkey, haad, subtle);
   const privJSON        = JSON.parse(unwrapString(wrapedPriv));
@@ -143,9 +143,9 @@ export const passDecryptPrivate = async (priv, pkey, pubMaster, endpoint, userna
   return privK;
 };
 
-export const decryptSubmission = async (ePrivKey, pkey, pubMaster, endpoint, username, content) => {
-  let privM       = await passDecryptPrivate(ePrivKey, pkey, pubMaster, endpoint, username);
-  const haad      = aad([pubMaster, endpoint, 'submission']);  
+export const decryptSubmission = async (ePrivKey, pkey, pubMaster, username, content) => {
+  let privM       = await passDecryptPrivate(ePrivKey, pkey, pubMaster, username);
+  const haad      = aad([pubMaster, 'submission']);  
   const subtle    = window.crypto.subtle;
   const [wrappedPubU, wrappedIV, wrappedStr] = content.split('-');
   const pubUJSON  = JSON.parse(unwrapString(wrappedPubU)); 
@@ -161,7 +161,7 @@ export const decryptSubmission = async (ePrivKey, pkey, pubMaster, endpoint, use
 export const encryptSubmission = async (data, setData) => {
 
   // additional authentication data
-  const haad      = aad([data.pubMaster, data.endpoint, 'submission']);
+  const haad      = aad([data.pubMaster, 'submission']);
   
   const subtle    = window.crypto.subtle;
 

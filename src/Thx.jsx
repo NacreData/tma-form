@@ -90,17 +90,7 @@ function Thx() {
           &nbsp;<a href="mailto:info@trianglemutualaid.org" style={{color: "teal"}}>info@trianglemutualaid.org</a>
         </Text>
       </section>
-      
-      <section id="development">
-        <Text mt="8">
-          The "backend" is still under development - presumably this will be something like 
-          a spreadsheet type view, as with Google Forms, though I am also thinking of adding 
-          the ability to track a series of interactions between TMA people and those who 
-          submitted the form. Any and all suggestions are more than welcome! DM Devin on 
-          Signal (username Mithrandir.66) or send to the email address above. 
-        </Text>
-      </section>
-      
+            
       <section id="theData">
         
         <Text mt="8">

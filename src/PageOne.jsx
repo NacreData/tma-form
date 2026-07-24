@@ -1,7 +1,7 @@
 import { Field, Input, Checkbox, RadioGroup, VStack, Flex, Button, Text,
   Grid, GridItem } from "@chakra-ui/react"
 import { useDataStore } from "./DataStoreProvider";
-import { RiArrowRightLine } from "react-icons/ri";
+import { RiArrowRightLine, RiCloseLargeFill } from "react-icons/ri";
 import { useEffect } from 'react';
 
 function PageOne() {
@@ -63,23 +63,273 @@ function PageOne() {
     scroll(0,0);
   }, []);
 
+  // data.impacted.payment []
+  
+  const cashApp = () => {
+    setData({
+      ...data,
+      impacted : {
+        ...data.impacted,
+        payment : [
+          ...data.impacted.payment,
+          'cashApp',
+        ]
+      }
+    }); 
+  };  
+  
+  const notCashApp = () => {
+    const pay = data.impacted.payment.reduce((r, p) => {
+      if ('cashApp' !== p) { 
+        r.push(p);
+      }
+      return r;
+    }, []);
+    
+    setData({
+      ...data,
+      impacted : {
+        ...data.impacted,
+        payment : pay,
+      }
+    }); 
+  };
+  
+  const notVenmo = () => {
+    const pay = data.impacted.payment.reduce((r, p) => {
+      if ('venmo' !== p) { 
+        r.push(p);
+      }
+      return r;
+    }, []);
+    
+    setData({
+      ...data,
+      impacted : {
+        ...data.impacted,
+        payment : pay,
+      }
+    }); 
+  };
+  
+  const notPaypal = () => {
+    const pay = data.impacted.payment.reduce((r, p) => {
+      if ('paypal' !== p) { 
+        r.push(p);
+      }
+      return r;
+    }, []);
+    
+    setData({
+      ...data,
+      impacted : {
+        ...data.impacted,
+        payment : pay,
+      }
+    }); 
+  };
+  
+  const notBank = () => {
+    const pay = data.impacted.payment.reduce((r, p) => {
+      if ('bank' !== p) { 
+        r.push(p);
+      }
+      return r;
+    }, []);
+    
+    setData({
+      ...data,
+      impacted : {
+        ...data.impacted,
+        payment : pay,
+      }
+    }); 
+  };
+
+  const venmo = () => {
+    setData({
+      ...data,
+      impacted : {
+        ...data.impacted,
+        payment : [
+          ...data.impacted.payment,
+          'venmo',
+        ]
+      }
+    }); 
+  };  
+
+  const paypal = () => {
+    setData({
+      ...data,
+      impacted : {
+        ...data.impacted,
+        payment : [
+          ...data.impacted.payment,
+          'paypal',
+        ]
+      }
+    }); 
+  };  
+
+  const bank = () => {
+    setData({
+      ...data,
+      impacted : {
+        ...data.impacted,
+        payment : [
+          ...data.impacted.payment,
+          'bank',
+        ]
+      }
+    }); 
+  };  
+
   return (
     <>      
       <section id="payment">
         <Field.Root  p='8'>
           <Field.Label>
-            Username/Handle/Email for Cashapp, Venmo, or Paypal account where funds can be sent:
+            How can you recieve financial support?
           </Field.Label>
-          <Input placeholder="Payment handle" name="payment" value={data.impacted.payment}
-            onChange={textUpdate} />
+          <Field.HelperText style={{textAlign: 'left'}}>
+            Financial help is not guaranteed. If Triangle Mutual Aid receives donations, we 
+            hope to be able to distribute some of those funds directly to impacted people. 
+            Funds are also used to purchase needed relief supplies. 
+          </Field.HelperText>
+
+          <Flex>
+            <Checkbox.Root variant='outline' checked={data.impacted.needFinancial}
+              onCheckedChange={ (state) => { checkboxUpdate("needFinancial", state.checked); } }
+              justify="flex-start" pl="8" mt='4'>
+              <Checkbox.HiddenInput />
+              <Checkbox.Control />
+              <Checkbox.Label>
+                Yes, I need financial assistance if it is available.
+              </Checkbox.Label>
+            </Checkbox.Root>
+          </Flex>
+
+          { data.impacted.needFinancial && 
+          <Flex gap="8" mt="4">
+            { data.impacted.payment.includes('cashApp') ?
+              <Button colorPalette="grey" variant="outline" onClick={notCashApp}>
+                <span style={{color: 'red'}}><RiCloseLargeFill /></span>
+                Cash App
+              </Button>
+              : <Button colorPalette="grey" variant="solid" onClick={cashApp}>Cash App</Button>
+            }
+            { data.impacted.payment.includes('venmo') ?
+              <Button colorPalette="grey" variant="outline" onClick={notVenmo}>
+                <span style={{color: 'red'}}><RiCloseLargeFill /></span>
+                Venmo
+              </Button>
+              : <Button colorPalette="grey" variant="solid" onClick={venmo}>Venmo</Button>
+            }
+            { data.impacted.payment.includes('paypal') ?
+              <Button colorPalette="grey" variant="outline" onClick={notPaypal}>
+                <span style={{color: 'red'}}><RiCloseLargeFill /></span>
+                PayPal
+              </Button>
+              : <Button colorPalette="grey" variant="solid" onClick={paypal}>PayPal</Button>
+            }
+            { data.impacted.payment.includes('bank') ?
+              <Button colorPalette="grey" variant="outline" onClick={notBank}>
+                <span style={{color: 'red'}}><RiCloseLargeFill /></span>
+                Bank Transfer
+              </Button>
+              : <Button colorPalette="grey" variant="solid" onClick={bank}>Bank Transfer</Button>
+            }
+          </Flex>  
+          }        
         </Field.Root>
       </section>
-
       
+      { (data.impacted.payment.includes('cashApp') && data.impacted.needFinancial) &&
+        <section id="cashApp">
+          <Field.Root mt="8">
+            <Field.Label>
+              <span aria-hidden="true" className="chakra-field__requiredIndicator css-gp8wgo">*</span> 
+              Cash App Payment Handle:
+            </Field.Label>
+            <Input mt="4" placeholder="$MyHandle" value={data.impacted.cashAppHandle} onChange={textUpdate} name="cashAppHandle" />
+          </Field.Root>
+          <Field.Root mt="4">
+            <Field.Label>
+              <span aria-hidden="true" className="chakra-field__requiredIndicator css-gp8wgo">*</span> 
+              Last Four Digits of phone associated with Cash App
+            </Field.Label>
+            <Input mt="4" placeholder="1234" value={data.impacted.cashAppLast4} onChange={textUpdate} name="cashAppLast4" />          
+          </Field.Root>
+        </section>      
+      }
+
+      { (data.impacted.payment.includes('venmo') && data.impacted.needFinancial) &&
+        <section id="venmo">
+          <Field.Root mt="8">
+            <Field.Label>
+              <span aria-hidden="true" className="chakra-field__requiredIndicator css-gp8wgo">*</span> 
+              Venmo Payment Handle:
+            </Field.Label>
+            <Input mt="4" placeholder="@MyHandle" value={data.impacted.venmoHandle} onChange={textUpdate} name="venmoHandle" />
+          </Field.Root>
+          <Field.Root mt="4">
+            <Field.Label>
+              <span aria-hidden="true" className="chakra-field__requiredIndicator css-gp8wgo">*</span> 
+              Last Four Digits of phone associated with Venmo
+            </Field.Label>
+            <Input mt="4" placeholder="1234" value={data.impacted.venmoLast4} onChange={textUpdate} name="venmoLast4" />          
+          </Field.Root>
+        </section>      
+      }
+
+      { (data.impacted.payment.includes('paypal') && data.impacted.needFinancial) &&
+        <section id="paypal">
+          <Field.Root mt="8">
+            <Field.Label>
+              <span aria-hidden="true" className="chakra-field__requiredIndicator css-gp8wgo">*</span> 
+              PayPal Payment Handle or Email address:
+            </Field.Label>
+            <Input mt="4" placeholder="me@example.com" value={data.impacted.paypalHandle} onChange={textUpdate} name="paypalHandle" />
+          </Field.Root>
+        </section>      
+      }
+      
+      { (data.impacted.payment.includes('bank') && data.impacted.needFinancial) &&
+        <section id="bank">
+          <Field.Root mt="8">
+            <Field.Label>
+              <span aria-hidden="true" className="chakra-field__requiredIndicator css-gp8wgo">*</span> 
+              First Name associated with Bank Account
+            </Field.Label>
+            <Input mt="4" placeholder="First" value={data.impacted.bankFirst} onChange={textUpdate} name="bankFirst" />
+          </Field.Root>
+          <Field.Root mt="4">
+            <Field.Label>
+              <span aria-hidden="true" className="chakra-field__requiredIndicator css-gp8wgo">*</span> 
+              Last Name associated with Bank Account
+            </Field.Label>
+            <Input mt="4" placeholder="Last" value={data.impacted.bankLast} onChange={textUpdate} name="bankLast" />
+          </Field.Root>
+          <Field.Root mt="4">
+            <Field.Label>Mobile Phone to send confirmation code</Field.Label>
+            <Input mt="4" placeholder="(555) 555-5555" value={data.impacted.bankMobile} onChange={textUpdate} name="bankMobile" />
+          </Field.Root>
+          <Field.Root mt="4">
+            <Field.Label>Email to send confirmation code</Field.Label>
+            <Input mt="4" placeholder="me@example.com" value={data.impacted.bankEmail} onChange={textUpdate} name="bankEmail" />
+            <Field.HelperText style={{textAlign: 'left'}}>
+              <span aria-hidden="true" className="chakra-field__requiredIndicator css-gp8wgo">*</span> 
+              One of mobile number or email is required
+            </Field.HelperText>
+          </Field.Root>
+        </section>
+      }
+
       <section id="housing-type">
-        <Field.Root  p='8'>
+        <Field.Root p='8'>
           <Field.Label>
-            The impacted propoerty is&hellip;
+            The impacted property is&hellip;
             <span aria-hidden="true" className="chakra-field__requiredIndicator css-gp8wgo">*</span>
           </Field.Label>
         </Field.Root>
@@ -113,7 +363,17 @@ function PageOne() {
         </GridItem>
         <GridItem>
           <Button colorPalette="green" variant="solid" onClick={next}
-            disabled={("" === data.impacted.housingOwnership)}>
+            disabled={(
+              "" === data.impacted.housingOwnership || 
+              (data.impacted.payment.includes('cashApp') && "" === data.impacted.cashAppHandle) ||
+              (data.impacted.payment.includes('cashApp') && "" === data.impacted.cashAppLast4) ||
+              (data.impacted.payment.includes('venmo') && "" === data.impacted.venmoHandle) ||
+              (data.impacted.payment.includes('venmo') && "" === data.impacted.venmoLast4) ||
+              (data.impacted.payment.includes('paypal') && "" === data.impacted.paypalHandle) ||
+              (data.impacted.payment.includes('bank') && "" === data.impacted.bankFirst) ||
+              (data.impacted.payment.includes('bank') && "" === data.impacted.bankLast) ||
+              (data.impacted.payment.includes('bank') && ("" === data.impacted.bankMobile || "" === data.impacted.bankEmail)) 
+            )}>
             Continue <RiArrowRightLine />
           </Button>
         </GridItem>

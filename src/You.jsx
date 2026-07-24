@@ -95,13 +95,13 @@ function Next() {
           </GridItem>
           <GridItem>
             <Button colorPalette="green" variant="solid"  onClick={next}
-              disabled={("" === data.contact || "" === data.user.name || "" === data.user.primaryLanguage)}>
+              disabled={("" === data.contact || "" === data.user.name || "" === data.user.primaryLanguage || ("" === data.user.phone && "" === data.user.signal && "" === data.user.email))}>
               Continue <RiArrowRightLine />
             </Button> 
           </GridItem>
         </Grid>
 
-        { ("" === data.contact || "" === data.user.name) &&
+        { ("" === data.contact || "" === data.user.name  || "" === data.user.primaryLanguage || ("" === data.user.phone && "" === data.user.signal && "" === data.user.email)) &&
           <Text textStyle="sm" fontWeight="light" style={{color: "#ef4444"}} mt="3">
             complete all required fields, marked with a red asterisk, to continue
           </Text>
@@ -147,7 +147,7 @@ function Next() {
               and is only available to vetted Triangle Mutual Aid volunteers.</p>
               <p>Government knowledge of where you live may put 
               some people in danger. However, if you want to be connected to some nonprofit and government agency
-              resources, you may be required to share your information. </p><br />
+              resources, they may require things like your legal name, address, etc.</p><br />
               <p>Government agencies may wish to use reported information related to property damage and 
               ownership in assessing criteria for government-declared "states of emergency".</p>
             </Field.HelperText>
@@ -176,13 +176,13 @@ function Next() {
           </GridItem>
           <GridItem>
             <Button colorPalette="green" variant="solid" onClick={next}
-              disabled={("" === data.user.name || "" === data.user.shareOK || "" === data.user.primaryLanguage)}>
+              disabled={("" === data.user.name || "" === data.user.shareOK || "" === data.user.primaryLanguage || ("" === data.user.phone && "" === data.user.signal && "" === data.user.email))}>
               Continue <RiArrowRightLine />
             </Button>
           </GridItem>
         </Grid>
 
-        { ("" === data.user.name || "" === data.user.shareOK) &&
+        { ("" === data.user.name || "" === data.user.shareOK || "" === data.user.primaryLanguage || ("" === data.user.phone && "" === data.user.signal && "" === data.user.email)) &&
           <Text textStyle="sm" fontWeight="light" style={{color: "#ef4444"}} mt="3">
             complete all required fields, marked with a red asterisk, to continue
           </Text>
@@ -365,6 +365,14 @@ function You() {
           <Input placeholder="me@example.com" name="email" value={data.user.email}
             onChange={textUpdate} />
         </Field.Root>
+      </section>
+      
+      <section id="someComms">
+        <Field.Root required p='8'>
+          <Field.Label>
+            <Field.RequiredIndicator /> Please provide at least one of Phone, Signal Handle, or Email. 
+          </Field.Label>
+        </Field.Root>      
       </section>
 
       <Next />

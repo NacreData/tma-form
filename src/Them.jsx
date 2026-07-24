@@ -75,6 +75,14 @@ function ContactInfo() {
               onChange={textUpdate} />
           </Field.Root>
         </section>
+        
+        <section id="someComms">
+          <Field.Root required p='8'>
+            <Field.Label>
+              <Field.RequiredIndicator /> Please provide at least one of Phone, Signal Handle, or Email. 
+            </Field.Label>
+          </Field.Root>      
+        </section>        
       </>
     );    
   }
@@ -106,8 +114,8 @@ function Them() {
   const checkboxUpdate = (field, isChecked) => { 
     setData({
       ...data,
-      user : {
-        ...data.user,
+      them : {
+        ...data.them,
         [field] : isChecked,
       },      
     }); 
@@ -223,7 +231,6 @@ function Them() {
           name="secondaryOtherLang" value={data.them.secondaryOtherLang} onChange={textUpdate} />        
         }
       </section>
-
       
       <ContactInfo />
 
@@ -237,7 +244,7 @@ function Them() {
             and is only available to vetted Triangle Mutual Aid volunteers.</p>
             <p>Government knowledge of where the impacted people live may 
             sometimes put people in danger. However, if they want to be connected to some nonprofit and government agency
-            resources, they may be required to share the information. </p><br />
+            resources, those places may require things like a legal name, address, etc.</p><br />
             <p>Government agencies may wish to use reported information related to property damage and 
             ownership in assessing criteria for government-declared "states of emergency".</p>
           </Field.HelperText>
@@ -266,7 +273,7 @@ function Them() {
         </GridItem>
         <GridItem>
           <Button colorPalette="green" variant="solid" onClick={next}
-            disabled={("" === data.them.name || "" === data.them.primaryLanguage || "" === data.them.shareOK)}>
+            disabled={("" === data.them.name || "" === data.them.primaryLanguage || "" === data.them.shareOK || ("me" !== data.contact && "" === data.them.phone && "" === data.them.signal && "" === data.them.email))}>
             Continue <RiArrowRightLine />
           </Button>
         </GridItem>

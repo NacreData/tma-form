@@ -487,7 +487,7 @@ function PageTwo() {
             </GridItem>
             
             <GridItem>
-              <Input placeholder="zip" name="supportZip" 
+              <Input placeholder="zip" name="impactedZip" 
               value={data.impacted.impactedZip} onChange={textUpdate} />
             </GridItem>
           </Grid>
@@ -524,7 +524,17 @@ function PageTwo() {
               value={data.impacted.supportZip} onChange={textUpdate} />
             </GridItem>           
           </Grid>
-        </Field.Root>       
+        </Field.Root>  
+        
+        <Flex justify="flex-start">
+          <Checkbox.Root variant='outline' checked={data.impacted.noSupportAddress}
+            onCheckedChange={ (state) => { checkboxUpdate("noSupportAddress", state.checked); } }
+            justify="flex-start" pl="8">
+            <Checkbox.HiddenInput />
+            <Checkbox.Control />
+            <Checkbox.Label>Please contact me&mdash;I do not have a stable address at this time.</Checkbox.Label>
+          </Checkbox.Root>        
+        </Flex>
       </section>
 
 

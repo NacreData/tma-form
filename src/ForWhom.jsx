@@ -2,20 +2,23 @@ import { Field, RadioGroup, Flex, Button, Checkbox, Text, Box } from "@chakra-ui
 import { useDataStore } from "./DataStoreProvider";
 import { RiArrowRightLine } from "react-icons/ri";
 // import { useEffect } from 'react';
+// import { ndhash, wrapString, wrap } from './Asymmetric.js';
 // import { makeMaster } from './Asymmetric.js';
 // import { passEncryptPrivate } from './Asymmetric.js';
 
 function ForWhom() {
   const { data, setData } = useDataStore();
   
+
 //   useEffect(() => {
 //     passEncryptPrivate(
-//       '[password]', 
-//       '[username]', 
-//       '[private key]',
-//       data.pubMaster, data.endpoint
+//       'monkey123', 
+//       'test', 
+//       'eyJjcnYiOiJYMjU1MTkiLCJkIjoicDRHOW1Qb0I0eFdDV1BlYTZpYUNsdm4tWU9ub0pRb3hONHhnLXNPc2xyayIsImV4dCI6dHJ1ZSwia2V5X29wcyI6WyJkZXJpdmVLZXkiXSwia3R5IjoiT0tQIiwieCI6IjRCLU5nVFc2NXJTa3dyNTFwdFJGT0JxZ251Y24zQWpBY0FFV24wS3k3VDAifQ==',
+//       data.pubMaster
 //     );
 //   }, []);
+ 
   
 //   useEffect(() => {
 //     makeMaster();
@@ -23,6 +26,20 @@ function ForWhom() {
 // //     console.log(privM);
 //     console.log('---');
 //   }, []);  
+
+
+  // also use local-pass-hash.py 
+  // pass gets hashed on both front and back end. z
+//   const setupUser = async (pass, username) => {
+//     let [s, h] = await ndhash('monkey123', 32, wrapString('test' + 'VhG6X+fEw5zGGFxW'));
+//     console.log(wrap(h));
+// 
+// 
+//   }
+
+//   useEffect(() => {
+//     setupUser('monkey123', 'test');
+//   }, []);
 
   const radioUpdate = (field, value) => { 
     setData({
@@ -67,69 +84,33 @@ function ForWhom() {
       <section id="for-whom">
         <Flex direction="column">        
           <Box bg="bg" shadow="lg" borderRadius="lg" style={{textAlign: 'left'}} m='8' p='4'>
-            <Text size="lg">
-              For testers: The following bit would probably be done on the backend or 
-              perhaps in a different admin interface in real life, but for now, go ahead 
-              and choose which type of disaster we are dealing with for this form: 
+            <p style={{textAlign: 'left', padding: 5}}>
+              Disclaimer: Thank you for sharing what you need with us. We are a group of
+              random individuals volunteering to support each other. We are not a non-profit
+              institution or grant-funded or government-funded entity. Our funds primarily
+              come from people donating. <strong>We cannot guarantee support</strong> &mdash; 
+              financial or otherwise. We will do our best to help in whatever way we can as 
+              a community.
+            </p>
+            <Checkbox.Root variant='outline' checked={data.agree}
+              onCheckedChange={ (state) => { checkboxUpdate("agree", state.checked); } }
+              justify="flex-start" pl="8" mt='4'>
+              <Checkbox.HiddenInput />
+              <Checkbox.Control />
+              <Checkbox.Label>
+                I acknowledge the limitations of this project. 
+                <span aria-hidden="true" className="chakra-field__requiredIndicator css-gp8wgo">*</span>
+              </Checkbox.Label>
+            </Checkbox.Root>
+            <Text fontWeight="light" style={{color: 'grey'}} mt='4'>
+              (To get involved in providing aid, send us an email: <a style={{color: "teal"}} href="mailto:info@trianglemutualaid.org">info@trianglemutualaid.org</a>. 
+              To make a donation, see <a style={{color: "teal"}} href="trianglemutualaid.org">our website</a>.)
             </Text>
-            
-            <Checkbox.Root variant='outline' checked={data.disaster.flood}
-              onCheckedChange={ (state) => { checkboxDisasterUpdate("flood", state.checked); } }
-              justify="flex-start" pl="8" mt='4'>
-              <Checkbox.HiddenInput />
-              <Checkbox.Control />
-              <Checkbox.Label>Flood</Checkbox.Label>
-            </Checkbox.Root>
-
-            <Checkbox.Root variant='outline' checked={data.disaster.storm}
-              onCheckedChange={ (state) => { checkboxDisasterUpdate("storm", state.checked); } }
-              justify="flex-start" pl="8" mt='4'>
-              <Checkbox.HiddenInput />
-              <Checkbox.Control />
-              <Checkbox.Label>Storm</Checkbox.Label>
-            </Checkbox.Root>
-
-            <Checkbox.Root variant='outline' checked={data.disaster.snow}
-              onCheckedChange={ (state) => { checkboxDisasterUpdate("snow", state.checked); } }
-              justify="flex-start" pl="8" mt='4'>
-              <Checkbox.HiddenInput />
-              <Checkbox.Control />
-              <Checkbox.Label>Snow/Ice</Checkbox.Label>
-            </Checkbox.Root>
-
-            <Checkbox.Root variant='outline' checked={data.disaster.heat}
-              onCheckedChange={ (state) => { checkboxDisasterUpdate("heat", state.checked); } }
-              justify="flex-start" pl="8" mt='4'>
-              <Checkbox.HiddenInput />
-              <Checkbox.Control />
-              <Checkbox.Label>Heat</Checkbox.Label>
-            </Checkbox.Root>
-            
+            <Text mt="4" style={{textAlign: 'left'}}>
+              <strong>Outside Resources</strong> <a href="https://drive.proton.me/urls/YKCS95JX4C#zd9402Y34kxJ" style={{color: "teal"}}>This link
+              will take you to a list of other resources in the area we are aware of.</a>
+            </Text>             
           </Box>
-        
-          
-          <p style={{textAlign: 'left', padding: 5}}>
-            Disclaimer: Thank you for sharing what you need with us. We are a group of
-            random individuals volunteering to support each other. We are not a non-profit
-            institution or grant-funded or government-funded entity. Our funds primarily
-            come from people donating. <strong>We cannot guarantee support</strong> &mdash; 
-            financial or otherwise. We will do our best to help in whatever way we can as 
-            a community.
-          </p>
-          <Checkbox.Root variant='outline' checked={data.agree}
-            onCheckedChange={ (state) => { checkboxUpdate("agree", state.checked); } }
-            justify="flex-start" pl="8" mt='4'>
-            <Checkbox.HiddenInput />
-            <Checkbox.Control />
-            <Checkbox.Label>
-              I acknowledge the limitations of this project. 
-              <span aria-hidden="true" className="chakra-field__requiredIndicator css-gp8wgo">*</span>
-            </Checkbox.Label>
-          </Checkbox.Root>
-          <Text fontWeight="light" style={{color: 'grey'}} mt='4'>
-            (To get involved in providing aid, send us an email: <a href="mailto:info@trianglemutualaid.org">info@trianglemutualaid.org</a>. 
-            To make a donation, see <a href="trianglemutualaid.org">our website</a>.)
-          </Text>
         </Flex>
       
       
