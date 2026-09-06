@@ -145,19 +145,19 @@ function Flood() {
             onValueChange={ (state) => radioUpdate('floodAmount', state.value) }>
             
             <Flex gap="4" direction="column" pl="8" mt="-5">
-              <RadioGroup.Item key='footOrMore' value='footOrMore' placement="left">
+              <RadioGroup.Item key='footOrMore' value='A foot or more' placement="left">
                 <RadioGroup.ItemHiddenInput />
                 <RadioGroup.ItemIndicator />
                 <RadioGroup.ItemText>One foot or more of water</RadioGroup.ItemText>
               </RadioGroup.Item>
     
-              <RadioGroup.Item key='fewInches' value='fewInches' placement="left">
+              <RadioGroup.Item key='fewInches' value='A few inches' placement="left">
                 <RadioGroup.ItemHiddenInput />
                 <RadioGroup.ItemIndicator />
                 <RadioGroup.ItemText>A few inches of water on the first floor</RadioGroup.ItemText>
               </RadioGroup.Item>
     
-              <RadioGroup.Item key='notMuch' value='notMuch' placement="left">
+              <RadioGroup.Item key='notMuch' value='not much' placement="left">
                 <RadioGroup.ItemHiddenInput />
                 <RadioGroup.ItemIndicator />
                 <RadioGroup.ItemText>Less than a few inches</RadioGroup.ItemText>
@@ -177,7 +177,7 @@ function Flood() {
             onValueChange={ (state) => radioUpdate('floodWhere', state.value) }>
             
             <Flex gap="4" direction="column" pl="8" mt="-5">
-              <RadioGroup.Item key='mainLivingArea' value='mainLivingArea' placement="left">
+              <RadioGroup.Item key='mainLivingArea' value='main living area' placement="left">
                 <RadioGroup.ItemHiddenInput />
                 <RadioGroup.ItemIndicator />
                 <RadioGroup.ItemText>Main living area</RadioGroup.ItemText>
@@ -304,7 +304,7 @@ function Heat() {
         ...data.impacted,
         [field] : isChecked,
       },      
-    }); 
+    });     
   };
 
   if (data.disaster.heat) {
@@ -495,10 +495,40 @@ function PageTwo() {
       </section>
 
       <section id="support-address">
-        <Field.Root  p='8'>
-          <Field.Label>
-            At what address can supplies/support be received?
-          </Field.Label>
+      
+        <Grid templateRows="repeat(1, 1fr)"
+            templateColumns="repeat(3, 1fr)"
+            gap={2}>
+        
+            <GridItem>        
+              Please Deliver Supplies to:           
+            </GridItem>
+            <GridItem>        
+              <Field.Root>
+                <Checkbox.Root variant='outline' checked={data.impacted.supportAddressSame}  mb='4'
+                 onCheckedChange={ (state) => { checkboxUpdate("supportAddressSame", state.checked); } }
+                  justify="flex-start" pl="8">
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control />
+                  <Checkbox.Label>Same as Above</Checkbox.Label>
+                </Checkbox.Root>
+              </Field.Root>   
+            </GridItem>
+            <GridItem>        
+              <Field.Root>            
+                <Checkbox.Root variant='outline' checked={data.impacted.noSupportAddress}
+                  onCheckedChange={ (state) => { checkboxUpdate("noSupportAddress", state.checked); } }
+                  justify="flex-start" pl="8">
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control />
+                  <Checkbox.Label>No stable address at this time.</Checkbox.Label>
+                </Checkbox.Root>                               
+              </Field.Root>                            
+            </GridItem>        
+        </Grid>
+      
+          { !data.impacted.supportAddressSame &&
+          <>
           
           <Grid templateRows="repeat(2, 1fr)"
             templateColumns="repeat(5, 1fr)"
@@ -524,17 +554,9 @@ function PageTwo() {
               value={data.impacted.supportZip} onChange={textUpdate} />
             </GridItem>           
           </Grid>
-        </Field.Root>  
+          </>
+          }        
         
-        <Flex justify="flex-start">
-          <Checkbox.Root variant='outline' checked={data.impacted.noSupportAddress}
-            onCheckedChange={ (state) => { checkboxUpdate("noSupportAddress", state.checked); } }
-            justify="flex-start" pl="8">
-            <Checkbox.HiddenInput />
-            <Checkbox.Control />
-            <Checkbox.Label>Please contact me&mdash;I do not have a stable address at this time.</Checkbox.Label>
-          </Checkbox.Root>        
-        </Flex>
       </section>
 
 
@@ -549,7 +571,7 @@ function PageTwo() {
         <RadioGroup.Root value={data.impacted.housingType} 
           onValueChange={ (state) => radioUpdate('housingType', state.value) }>
           <Flex gap="4" direction="column" pl="8" mt="-5">
-            <RadioGroup.Item key='singleFamily' value='singleFamily' placement="left">
+            <RadioGroup.Item key='singleFamily' value='single family home' placement="left">
               <RadioGroup.ItemHiddenInput />
               <RadioGroup.ItemIndicator />
               <RadioGroup.ItemText>Single Family Home</RadioGroup.ItemText>

@@ -18,10 +18,10 @@ export const empty = {
   agree     : false,
   contact   : "",
   disaster  : {
-    flood : true,
+    flood : false,
     storm : false,
     snow  : false,
-    heat  : false,
+    heat  : true,
     fire  : false,
   },
   user      : {
@@ -99,7 +99,11 @@ export const empty = {
     heatOther          : "",
     heatOtherValue     : "",
     whatElse           : "",
-  }
+  }, 
+  
+  /* used by admin users only. */
+  subdata : {},
+  subkeys : [],
 };
 
 export default function DataStoreProvider({children}) {  

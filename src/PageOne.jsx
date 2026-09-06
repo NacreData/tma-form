@@ -62,8 +62,6 @@ function PageOne() {
   useEffect(() => {
     scroll(0,0);
   }, []);
-
-  // data.impacted.payment []
   
   const cashApp = () => {
     setData({

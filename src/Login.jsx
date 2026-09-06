@@ -2,7 +2,9 @@ import { Field, Flex, Button, Input, Text } from "@chakra-ui/react"
 import { useDataStore } from "./DataStoreProvider";
 import { RiArrowRightLine } from "react-icons/ri";
 import { ndhash, wrapString, wrap, passKey, unwrap } from './Asymmetric.js';
-
+import {
+  PasswordInput
+} from "./components/ui/password-input"
 
 function Login() {
   const { data, setData } = useDataStore();
@@ -72,7 +74,7 @@ function Login() {
       <Input placeholder="Username" name="username" mb='10' justify="flex-start"
         value={data.username} onChange={textUpdate} w='90%' />    
   
-      <Input placeholder="Pass Phrase" name="password" mb='10' justify="flex-start"
+      <PasswordInput placeholder="Pass Phrase" name="password" mb='10' justify="flex-start"
         value={data.password} onChange={textUpdate} w='90%' />    
 
       <Button colorPalette="green" variant="solid" onClick={next}

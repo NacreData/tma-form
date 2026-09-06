@@ -158,6 +158,22 @@ export const decryptSubmission = async (ePrivKey, pkey, pubMaster, username, con
   return dcontent;
 };
 
+export const decryptNote = async (ePrivKey, pkey, pubMaster, username, content) => {
+  let privM       = await passDecryptPrivate(ePrivKey, pkey, pubMaster, username);
+  const haad      = aad([pubMaster, 'note']);  
+  const subtle    = window.crypto.subtle;
+  const [wrappedPubU, wrappedIV, wrappedStr] = content.split('-');
+  const pubUJSON  = JSON.parse(unwrapString(wrappedPubU)); 
+  const pubU      = await subtle.importKey('jwk', pubUJSON, 'X25519', false, []);
+  let sKey        = await deriveKey(pubU, privM, subtle);
+  privM           = undefined;
+  const dcontent  = await decrypt([wrappedIV, wrappedStr].join('-'), sKey, haad, subtle);
+  sKey            = undefined;
+  
+  return dcontent;
+};
+
+
 export const encryptSubmission = async (data, setData) => {
 
   // additional authentication data
@@ -216,6 +232,63 @@ export const encryptSubmission = async (data, setData) => {
   }
     
 };
+
+export const postNote = async (ts, data, setData) => {
+
+  const haad      = aad([data.pubMaster, 'note']);
+  
+  const subtle    = window.crypto.subtle;
+
+  let keyPair     = await genAsymmetricKey(subtle);
+  
+  const pubMJSON  = JSON.parse(unwrapString(data.pubMaster));
+  
+  const pubM      = await subtle.importKey('jwk', pubMJSON, 'X25519', false, []);
+  
+  let sKey        = await deriveKey(pubM, keyPair.privateKey, subtle);
+  
+  const newNote   = data.subdata[ts].newNote;
+  
+  const now       = Date.now() * 1000;
+  
+  data.subdata[ts].notes[now] = {content: newNote, user: data.username, timestamp: now};
+  
+  data.subdata[ts].newNote = "";
+  
+  const dataStr   = JSON.stringify({note: newNote, user: data.username});
+  
+  const encData   = await encrypt(dataStr, sKey, haad, subtle);
+
+  sKey            = undefined;
+  
+  const pubU      = wrapString(JSON.stringify(await subtle.exportKey('jwk', keyPair.publicKey)));
+  
+  keyPair         = undefined;
+  
+  const toSave    = [pubU, encData].join('-');
+
+  const response  = await fetch(data.endpoint + 'note', {
+                      method : "POST",
+                      body   : JSON.stringify({content: toSave, submission: ts})
+                    });
+                    
+  const ret       = await response.json();
+  
+  if ('OK' === ret.status) {
+    setData({
+      ...data,
+      loading : false,
+      subdata : data.subdata,
+    });
+  }
+  else {
+    setData({
+      ...data,
+      loading : false,
+      err     : 'Error saving data to server. Please check internet connection and report persistent problem to info@trianglemutualaid.org',
+    });  
+  }
+}
 
 // https://soatok.blog/2021/07/30/canonicalization-attacks-against-macs-and-signatures/#pae
 const LE64 = (n) => {
