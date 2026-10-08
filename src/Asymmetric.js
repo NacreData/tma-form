@@ -80,7 +80,7 @@ const decrypt = async (str, key, auth, subtle=window.crypto.subtle) => {
   const [wrappedIV, wrappedStr] = str.split('-');
   
   const iv     = unwrap(wrappedIV);
-    
+  
   const buff   = await subtle.decrypt({ 
     name           : 'AES-GCM', 
     iv             : iv, 
@@ -121,6 +121,7 @@ const aad = (input) => {
   );
 };
 
+/*
 export const passEncryptPrivate = async (pass, username, priv, pubMaster) => {
   let [passSalt, pKey]  = await passKey(pass);
   const haad            = aad([pubMaster, username, 'key']);
@@ -130,21 +131,27 @@ export const passEncryptPrivate = async (pass, username, priv, pubMaster) => {
   pKey = undefined;
   priv = undefined;
   
-  console.log(`password Salt: ${passSalt}`);
-  console.log(`encrypted Private Key: ${passEncPrivKey}`);
+//   console.log(`password Salt: ${passSalt}`);
+//   console.log(`encrypted Private Key: ${passEncPrivKey}`);
 };
+*/
 
-export const passDecryptPrivate = async (priv, pkey, pubMaster, username) => {
+export const passDecryptPrivate = async (ePrivKey, pkey, pubMaster, username, extractable=false) => {   
   const haad            = aad([pubMaster, username, 'key']);
   const subtle          = window.crypto.subtle;
-  const wrapedPriv      = await decrypt(priv, pkey, haad, subtle);
+  const wrapedPriv      = await decrypt(ePrivKey, pkey, haad, subtle);
   const privJSON        = JSON.parse(unwrapString(wrapedPriv));
-  const privK           = await subtle.importKey('jwk', privJSON, 'X25519', false, ["deriveKey"]);
+  const privK           = await subtle.importKey('jwk', privJSON, 'X25519', extractable, ["deriveKey"]);
   return privK;
 };
 
 export const decryptSubmission = async (ePrivKey, pkey, pubMaster, username, content) => {
+  console.log('ePrivKey:'); console.log(ePrivKey);
+  console.log('pkey:'); console.log(pkey);
+  console.log('pubMaster:'); console.log(pubMaster);
+  console.log('username:'); console.log(username);
   let privM       = await passDecryptPrivate(ePrivKey, pkey, pubMaster, username);
+  console.log('privM:'); console.log(privM);
   const haad      = aad([pubMaster, 'submission']);  
   const subtle    = window.crypto.subtle;
   const [wrappedPubU, wrappedIV, wrappedStr] = content.split('-');
@@ -172,7 +179,6 @@ export const decryptNote = async (ePrivKey, pkey, pubMaster, username, content) 
   
   return dcontent;
 };
-
 
 export const encryptSubmission = async (data, setData) => {
 
@@ -322,6 +328,105 @@ const PAE = (pieces) => {
     return output;
 }
 
+const newRandPass = async () => {
+  const pass    = wrap(window.crypto.getRandomValues(new Uint8Array(16)));
+  const [s, h]  = await ndhash(pass);
+  const nps     = wrap(h);
+  const newPass = nps.replaceAll('0','#').replaceAll('o','$').replaceAll('O','!').replaceAll('1','%').replaceAll('l','^').replaceAll('/','&');
+  return newPass.substring(0,16);
+};
+
+export const addUser = async (data) => { 
+
+  const subtle  = window.crypto.subtle;
+
+// I. Un-encrypting the "master private key"
+//   A. Derive a key from the (existing user's) password: 
+//     1. Retrieve the salt associated with this username from the server: 
+
+  const [s, h]  = await ndhash(data.password, 32, wrapString(data.username + 'VhG6X+fEw5zGGFxW')); 
+    
+  let response  = await fetch(data.endpoint + 'login', {
+                      method : "POST",
+                      body   : JSON.stringify({username: data.username, password: wrap(h)})
+                    });
+                    
+  let ret       = await response.json(); 
+  
+//     2. Derive the password-derived key: 
+  
+  let [passSalt, pKey] = await passKey(data.password, ret.passSalt);
+  
+  let ePrivKey  = ret.ePrivKey;
+  passSalt = undefined;
+  ret      = undefined;
+  response = undefined;
+
+//   B. Un-encrypt the master private key  
+
+  const haad            = aad([data.pubMaster, data.username, 'key']);
+  const wrapedPriv      = await decrypt(ePrivKey, pKey, haad, subtle);
+  
+// II. re-encrypting the "master private key" for the new user 
+//   A. Derive a key from the password:
+
+  let newPassword = await newRandPass();  
+  let [newPassSalt, newPassKey] = await passKey(newPassword);
+  
+//   B. Encrypt the master private key using this new password-derived key  
+//     1. Generate hash of password to use when new user signs in
+    
+    let newSalt2    = wrapString(data.newUserName + 'VhG6X+fEw5zGGFxW');
+    let newPassHash = null;
+    [newSalt2, newPassHash] = await ndhash(newPassword, 32, newSalt2);
+    newSalt2        = undefined;
+    
+    const newUserHaad = aad([data.pubMaster, data.newUserName, 'key']);
+  
+    let myEncMasterPriv = await encrypt(wrapedPriv, newPassKey, newUserHaad, subtle);  
+    
+//   C. Send to the backend:
+
+    response  = await fetch(data.endpoint + 'add-user', {
+                  method : "POST",
+                  body   : JSON.stringify({
+                    username : data.username, 
+                    password : wrap(h),
+                    token    : data.token,
+                    salt     : data.salt,
+                    
+                    newUsername : data.newUserName,
+                    newPassSalt : newPassSalt,
+                    newPassHash : wrap(newPassHash),
+                    myEncMasterPriv : myEncMasterPriv
+                  })
+                });
+    
+    console.log({
+      newUsername : data.newUserName,
+      newPassSalt : newPassSalt,
+      newPassHash : wrap(newPassHash),
+      myEncMasterPriv : myEncMasterPriv,
+      newPassword : newPassword,
+    });
+                        
+    newPassSalt = undefined;
+    newPassHash = undefined;
+    myEncMasterPriv = undefined;
+    
+//   D. Send info to new user
+    ret = await response.json(); 
+    if ('OK' === ret.status) {
+      // new server function to send email. 
+      return true;
+    }
+    else {
+      // handle error, display to user
+      return false;
+    }
+
+};
+
 /* 
 export const makeMaster = async () => {
   const subtle    = window.crypto.subtle;
@@ -352,7 +457,7 @@ export const asymmTest = async () => {
   // 3. Generate a password-derived key 
   let [salt1, passDerivedKey] = await passKey('Kropotkin'); 
   
-  // 4. Generate hash of password to use in authenticated associated data
+  // 4. Generate hash of password to use in authenticating associated data
   let [salt2, hash] = await ndhash('Kropotkin', 32);
   
   // 5. Encrypt the master Private key. 

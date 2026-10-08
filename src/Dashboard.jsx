@@ -1,14 +1,163 @@
 import { Field, Flex, Button, Input, Text, Spinner, Icon, Separator, Accordion, Span,
-  NativeSelect, Table, Badge, Textarea  } from "@chakra-ui/react"
+  NativeSelect, Table, Badge, Textarea, For  } from "@chakra-ui/react"
 import { useDataStore, empty } from "./DataStoreProvider";
 import { useEffect } from 'react';
-import { decryptSubmission, postNote, decryptNote } from './Asymmetric.js';
+import { decryptSubmission, postNote, decryptNote, addUser } from './Asymmetric.js';
 import { MdAdsClick } from "react-icons/md"
+
+function StatusSelect({submission,}) {
+  const { data, setData } = useDataStore();
+  
+  const textUpdate = (e) => {
+    setData({
+      ...data,
+      subdata : {
+        ...data.subdata,
+        [e.target.name] : {
+          ...data.subdata[e.target.name],
+          status    : 'Other',
+          newStatus : e.target.value,
+        }        
+      }
+    });
+  };
+  
+  const updateStatus = async (e) => {   
+    if ('Other' === e.target.value) {
+      setData({
+        ...data, 
+        subdata : {
+          ...data.subdata, 
+          [e.target.name] : {
+            ...data.subdata[e.target.name],
+            status : "Other",
+          }
+        }
+      });      
+    }
+    else {
+      setData({
+        ...data, 
+        loading : true,
+        subdata : {
+          ...data.subdata, 
+          [e.target.name] : {
+            ...data.subdata[e.target.name],
+            prevStatus : data.subdata[e.target.name].status,
+            status : "...saving...",
+          }
+        }
+      });
+      
+      const response = await fetch(data.endpoint + 'status-list', {
+        method : "PUT", 
+        body   : JSON.stringify({
+          username   : data.username, 
+          token      : data.token,
+          salt       : data.salt,
+          submission : e.target.name,
+          status     : e.target.value
+        })
+      });
+      
+      const ret = await response.json();
+      
+      if ('OK' === ret.status) {
+        setData({
+          ...data,
+          loading : false,
+          subdata : {
+            ...data.subdata, 
+            [e.target.name] : {
+              ...data.subdata[e.target.name],
+              status : e.target.value,
+              newStatus : ''
+            }
+          },
+          status_list : ret.status_list,
+        });
+      }
+      else {
+        setData({
+          ...data,
+          loading : false,
+          err     : 'Error saving data to server. Please check internet connection and report persistent problem to info@trianglemutualaid.org',
+          subdata : {
+            ...data.subdata, 
+            [e.target.name] : {
+              ...data.subdata[e.target.name],
+              status : data.subdata[e.target.name].prevStatus,
+            }
+          }
+        });  
+      }
+    
+    }
+  };
+  
+  const saveNewStatus = () => {
+    const e = {target : {value : data.subdata[submission].newStatus, name : submission}};
+    updateStatus(e);
+  };
+    
+
+  if ('Other' === data.subdata[submission].status) {
+    return (
+      <>
+        <Input placeholder="enter new status value" value={data.subdata[submission].newStatus}
+        onChange={textUpdate} name={submission} />
+        <Button colorPalette="green" variant="outline" onClick={saveNewStatus}>
+          Save Status 
+        </Button>
+      </>
+    );
+  }
+  else {
+
+    return (
+      <NativeSelect.Root size="sm">
+        <NativeSelect.Field value={data.subdata[submission].status} onChange={updateStatus} name={submission}>
+          <For each={data.status_list} fallback={[]}>       
+            {(item, index) => (
+              <option value={item} key={index}>{item}</option>
+            )}
+          </For>
+        </NativeSelect.Field>  
+        <NativeSelect.Indicator />
+      </NativeSelect.Root>
+    );  
+  }
+}
 
 function Dashboard() {
   const { data, setData } = useDataStore();
   
-  const get_notes = async (last_ts, submission, subdata, subkeys) => {
+  const get_status_list = async () => {
+    const response = await fetch(data.endpoint + 'status-list', {
+      method : "GET"
+    });
+    const ret      = await response.json();
+    
+    if ('OK' === ret.status) {
+      setData({
+        ...data,
+        status_list : ret.status_list
+      });
+      
+      return ret.status_list;
+    }
+    else {
+      setData({
+        ...data,
+        loading : false,
+        err     : 'Error downloading data. Please check connection and try again.'
+      });
+      
+      return false;
+    }
+  };  
+  
+  const get_notes = async (last_ts, submission, subdata, subkeys, status_list) => {
     const response = await fetch(data.endpoint + 'notes-list', {
                         method : "POST",
                         body   : JSON.stringify({
@@ -34,13 +183,14 @@ function Dashboard() {
       }, 0);
       
       if (next) {
-        get_notes(0, next, subdata, subkeys);
+        get_notes(0, next, subdata, subkeys, status_list);
       }
       else {
         setData({
           ...data,
           subdata  : subdata,
           subkeys  : subkeys,
+          status_list : status_list,
           loading  : false,
           ePrivKey : undefined,
           pkey     : undefined,
@@ -66,13 +216,14 @@ function Dashboard() {
         ...data, 
         subdata : subdata,
         subkeys : subkeys,
+        status_list : status_list,
       });
       
-      get_notes(ret.timestamp, submission, subdata, subkeys);
+      get_notes(ret.timestamp, submission, subdata, subkeys, status_list);
     }
   };
-  
-  const init = async (last_ts, subdata, subkeys) => {
+
+  const get_submissions = async (last_ts, subdata, subkeys, status_list) => {
     const response  = await fetch(data.endpoint + 'list', {
                         method : "POST",
                         body   : JSON.stringify({
@@ -86,7 +237,7 @@ function Dashboard() {
     const ret       = await response.json(); 
     
     if ('no further data' === ret.message) {
-      get_notes(0, subkeys[0], subdata, subkeys);
+      get_notes(0, subkeys[0], subdata, subkeys, status_list);
     }
     else {
       const submission = await decryptSubmission(
@@ -111,14 +262,23 @@ function Dashboard() {
         ...data, 
         subdata : subdata,
         subkeys : subkeys,
+        status_list : status_list,
       });
     
-      init(ret.timestamp, subdata, subkeys);
+      get_submissions(ret.timestamp, subdata, subkeys, status_list);
     }
   };
   
+  const init = async () => {
+    const status_list = await get_status_list();
+    
+    if (status_list) {
+      get_submissions("0", {}, [], status_list);    
+    }    
+  };
+  
   useEffect(() => {
-    init("0", {}, []);
+    init();
   }, []);
 
   const displayTimestamp = (ts) => {
@@ -149,10 +309,12 @@ function Dashboard() {
     });
   };
   
+//       page : 'admin',
   const admin = () => {
     setData({
       ...data,
-      page : 'admin',
+      page     : 'add',
+      password : "",
     });
   };
   
@@ -174,10 +336,6 @@ function Dashboard() {
   
   const formatEmail = (e) => {
     return `<a href="mailto:${e}" style="color: #008080">${e}</a>`;
-  };
-  
-  const updateStatus = (e) => {
-  
   };
   
   const lang = (whom) => {
@@ -365,15 +523,7 @@ function Dashboard() {
               <Accordion.ItemTrigger>
                 <Span flex="1">{displayTimestamp(ts)}</Span>
                 <Span flex="1">
-                  <NativeSelect.Root size="sm">
-                    <NativeSelect.Field value={data.subdata[ts].status} onChange={updateStatus}>
-                        <option value="new">New</option>
-                        <option value="in process">In Process</option>
-                        <option value="need info">Need Info</option>
-                        <option value="complete">Complete</option>
-                    </NativeSelect.Field>
-                    <NativeSelect.Indicator />
-                  </NativeSelect.Root>
+                  <StatusSelect submission={ts} />
                 </Span>
                 <Span flex="1" dangerouslySetInnerHTML={{__html: peopleTown(data.subdata[ts])}}></Span>
                 
@@ -398,6 +548,16 @@ function Dashboard() {
                       </Table.Row>
                     </Table.Body>
                   </Table.Root>
+                  
+                  { !!data.err && 
+                  <Table.Root size="sm" mt='5'>
+                    <Table.Body>
+                      <Table.Row key="error">
+                        <Table.Cell>{data.err}</Table.Cell>
+                      </Table.Row>
+                    </Table.Body>
+                  </Table.Root>
+                  }
 
                   <Table.Root size="sm" mt='5'>
                     <Table.Header>

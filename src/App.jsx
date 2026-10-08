@@ -13,6 +13,7 @@ import Dashboard from './Dashboard.jsx';
 import CaseDetail from './CaseDetail.jsx';
 import Profile from './Profile.jsx';
 import Admin from './Admin.jsx';
+import AddUser from './AddUser.jsx';
 
 function Routing() {
   const { data } = useDataStore();
@@ -46,6 +47,9 @@ function Routing() {
   }
   else if ('profile' === data.page) {
     return (<Profile />);
+  }
+  else if ('add' === data.page) {
+    return (<AddUser />);
   }
   else if ('admin' === data.page) {
     return (<Admin />);

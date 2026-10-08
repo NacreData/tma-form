@@ -40,7 +40,10 @@ function Login() {
                       
     const ret       = await response.json(); 
     
-    const [passSalt, pKey]      = await passKey(data.password, ret.passSalt);
+    let [passSalt, pKey] = await passKey(data.password, ret.passSalt);
+    
+    passSalt = undefined;
+    ret.passSalt = undefined;
   
     if ("OK" === ret.status) {
       setData({

@@ -104,6 +104,11 @@ export const empty = {
   /* used by admin users only. */
   subdata : {},
   subkeys : [],
+  status_list  : [],
+  newUserName  : "",
+  newUserEmail : "", 
+  newUserAdmin : false,
+  
 };
 
 export default function DataStoreProvider({children}) {  
