@@ -1,0 +1,611 @@
+import { useDataStore } from "./DataStoreProvider";
+import { Base64 } from 'js-base64';
+
+const arrayBufferToString = (buf) => {
+  return String.fromCharCode.apply(null, new Uint8Array(buf));
+};
+
+const stringToArrayBuffer = (str) => {
+    const buf = new ArrayBuffer(str.length); 
+    const bufView = new Uint8Array(buf);
+    for (let i=0, strLen=str.length; i < strLen; i++) {
+      bufView[i] = str.charCodeAt(i);
+    }
+    return bufView;
+};
+
+export const wrapString = (str) => {
+  return Base64.encode(str);
+};
+
+export const unwrapString = (str) => {
+  return Base64.decode(str);
+};
+
+export const wrap = (buf) => { return wrapString(arrayBufferToString(buf)); }
+
+export const unwrap = (str) => { return stringToArrayBuffer(unwrapString(str)); }
+
+const genAsymmetricKey = async (subtle) => {
+  const keyPair = await subtle.generateKey('X25519', true, ['deriveKey',]);
+  
+  return keyPair;
+};
+
+const deriveKey = async (toPubKey, fromPrivKey, subtle) => {  
+  const gcmKey = await subtle.deriveKey(
+    {name: 'X25519', public: toPubKey},
+    fromPrivKey,
+    {name: 'AES-GCM', length: 256},
+    true,
+    ['encrypt', 'decrypt']
+  );
+  
+  return gcmKey;
+};
+
+const makeIV = () => {
+  const array = new Uint8Array(12);
+  return window.crypto.getRandomValues(array);
+};
+
+const encrypt = async (str, key, auth, subtle=window.crypto.subtle) => {
+  if ('' === str) { return ''; }
+  
+  if ('object' === typeof(str)) { 
+    str = JSON.stringify(str);
+  }
+
+  const enc    = new TextEncoder();
+  
+  const iv     = makeIV();
+  
+  const encStr = enc.encode(str);
+  
+  const buff   = await subtle.encrypt({ 
+    name           : 'AES-GCM', 
+    iv             : iv, 
+    additionalData : stringToArrayBuffer(auth),
+    tagLength      : 128    
+  }, key, encStr);
+  
+  return wrapString(arrayBufferToString(iv)) + '-' + wrapString(arrayBufferToString(buff));
+};
+
+const decrypt = async (str, key, auth, subtle=window.crypto.subtle) => {
+  if ('' === str) { return ''; }
+  
+  const dec    = new TextDecoder();
+
+  const [wrappedIV, wrappedStr] = str.split('-');
+  
+  const iv     = unwrap(wrappedIV);
+  
+  const buff   = await subtle.decrypt({ 
+    name           : 'AES-GCM', 
+    iv             : iv, 
+    additionalData : stringToArrayBuffer(auth),
+    tagLength      : 128    
+  }, key, unwrap(wrappedStr));
+  
+  const decode = dec.decode(buff);
+
+  try {
+    return JSON.parse(decode);
+  }
+  catch (e) {
+    return decode;
+  }  
+};
+
+export const ndhash = async (pwd, len=16, salt=false) => {
+  const s = salt ? unwrap(salt) : window.crypto.getRandomValues(new Uint8Array(16));
+  const h = await argon2.hash({ pass: pwd, salt: s, time: 11, mem: 4096, hashLen: len, type: 'Argon2id' });
+  
+  return [s, h.hash];
+};
+
+export const passKey = async (pass, salt=false) => {
+  const [s, h] = await ndhash(pass, 32, salt);  
+  const k      = await window.crypto.subtle.importKey("raw", h, "AES-GCM", true, [
+    "encrypt",
+    "decrypt",
+  ]);
+    
+  return [wrap(s), k];
+};
+
+const aad = (input) => {
+  return PAE(
+    input.concat( ['tma-form',] )
+  );
+};
+
+/*
+export const passEncryptPrivate = async (pass, username, priv, pubMaster) => {
+  let [passSalt, pKey]  = await passKey(pass);
+  const haad            = aad([pubMaster, username, 'key']);
+  const subtle          = window.crypto.subtle;
+  const passEncPrivKey  = await encrypt(priv, pKey, haad, subtle);
+  
+  pKey = undefined;
+  priv = undefined;
+  
+//   console.log(`password Salt: ${passSalt}`);
+//   console.log(`encrypted Private Key: ${passEncPrivKey}`);
+};
+*/
+
+export const passDecryptPrivate = async (ePrivKey, pkey, pubMaster, username, extractable=false) => {   
+  const haad            = aad([pubMaster, username, 'key']);
+  const subtle          = window.crypto.subtle;
+  const wrapedPriv      = await decrypt(ePrivKey, pkey, haad, subtle);
+  const privJSON        = JSON.parse(unwrapString(wrapedPriv));
+  const privK           = await subtle.importKey('jwk', privJSON, 'X25519', extractable, ["deriveKey"]);
+  return privK;
+};
+
+export const decryptSubmission = async (ePrivKey, pkey, pubMaster, username, content) => {
+  let privM       = await passDecryptPrivate(ePrivKey, pkey, pubMaster, username);
+  const haad      = aad([pubMaster, 'submission']);  
+  const subtle    = window.crypto.subtle;
+  const [wrappedPubU, wrappedIV, wrappedStr] = content.split('-');
+  const pubUJSON  = JSON.parse(unwrapString(wrappedPubU)); 
+  const pubU      = await subtle.importKey('jwk', pubUJSON, 'X25519', false, []);
+  let sKey        = await deriveKey(pubU, privM, subtle);
+  privM           = undefined;
+  const dcontent  = await decrypt([wrappedIV, wrappedStr].join('-'), sKey, haad, subtle);
+  sKey            = undefined;
+  
+  return dcontent;
+};
+
+export const decryptNote = async (ePrivKey, pkey, pubMaster, username, content) => {
+  let privM       = await passDecryptPrivate(ePrivKey, pkey, pubMaster, username);
+  const haad      = aad([pubMaster, 'note']);  
+  const subtle    = window.crypto.subtle;
+  const [wrappedPubU, wrappedIV, wrappedStr] = content.split('-');
+  const pubUJSON  = JSON.parse(unwrapString(wrappedPubU)); 
+  const pubU      = await subtle.importKey('jwk', pubUJSON, 'X25519', false, []);
+  let sKey        = await deriveKey(pubU, privM, subtle);
+  privM           = undefined;
+  const dcontent  = await decrypt([wrappedIV, wrappedStr].join('-'), sKey, haad, subtle);
+  sKey            = undefined;
+  
+  return dcontent;
+};
+
+export const encryptSubmission = async (data, setData) => {
+
+  // additional authentication data
+  const haad      = aad([data.pubMaster, 'submission']);
+  
+  const subtle    = window.crypto.subtle;
+
+  let keyPair     = await genAsymmetricKey(subtle);
+  
+  const pubMJSON  = JSON.parse(unwrapString(data.pubMaster));
+  
+  const pubM      = await subtle.importKey('jwk', pubMJSON, 'X25519', false, []);
+  
+  let sKey        = await deriveKey(pubM, keyPair.privateKey, subtle);
+  
+  // clean up data to save and convert it to a string
+  const _d_d      = JSON.parse(JSON.stringify(data)); // deep copy
+  _d_d.pubMaster  = undefined;
+  _d_d.endpoint   = undefined;
+  _d_d.page       = undefined;
+  _d_d.err        = undefined; 
+  _d_d.loading    = undefined;
+  
+  const dataStr   = JSON.stringify(_d_d);
+  
+  const encData   = await encrypt(dataStr, sKey, haad, subtle);
+  
+  sKey            = undefined;
+  
+  const pubU      = wrapString(JSON.stringify(await subtle.exportKey('jwk', keyPair.publicKey)));
+  
+  keyPair         = undefined;
+  
+  const toSave    = [pubU, encData].join('-');
+  
+  const response  = await fetch(data.endpoint + 'submission', {
+                      method : "POST",
+                      body   : JSON.stringify({content: toSave})
+                    });
+                    
+  const ret       = await response.json();
+  
+  if ('OK' === ret.status) {
+    setData({
+      ...data,
+      loading : false,
+      page    : 'thx',
+    });  
+  }
+  else {
+    setData({
+      ...data,
+      loading : false,
+      err     : 'Error saving data to server. Please check internet connection and report persistent problem to info@trianglemutualaid.org',
+    });  
+  }
+    
+};
+
+export const postNote = async (ts, data, setData) => {
+  const haad      = aad([data.pubMaster, 'note']);
+  
+  const subtle    = window.crypto.subtle;
+
+  let keyPair     = await genAsymmetricKey(subtle);
+  
+  const pubMJSON  = JSON.parse(unwrapString(data.pubMaster));
+  
+  const pubM      = await subtle.importKey('jwk', pubMJSON, 'X25519', false, []);
+  
+  let sKey        = await deriveKey(pubM, keyPair.privateKey, subtle);
+  
+  keyPair.privateKey = undefined;
+  
+  const newNote   = data.subdata[ts].newNote;
+  
+  const now       = Date.now() * 1000;
+  
+  data.subdata[ts].notes[now] = {content: newNote, user: data.username, timestamp: now};
+  
+  data.subdata[ts].newNote = "";
+  
+  const dataStr   = JSON.stringify({note: newNote, user: data.userID});
+  
+  const encData   = await encrypt(dataStr, sKey, haad, subtle);
+
+  sKey            = undefined;
+  
+  const pubU      = wrapString(JSON.stringify(await subtle.exportKey('jwk', keyPair.publicKey)));
+  
+  keyPair         = undefined;
+  
+  const toSave    = [pubU, encData].join('-');
+
+  const response  = await fetch(data.endpoint + 'note', {
+                      method : "POST",
+                      body   : JSON.stringify({
+                        content    : toSave, 
+                        submission : ts,
+                        username   : data.username, 
+                        token      : data.token,
+                      })
+                    });
+                    
+  const ret       = await response.json();
+  
+  if ('OK' === ret.status) {
+    setData({
+      ...data,
+      loading : false,
+      subdata : data.subdata,
+    });
+  }
+  else {
+    setData({
+      ...data,
+      loading : false,
+      err     : 'Error saving data to server. Please check internet connection and report persistent problem to info@trianglemutualaid.org',
+    });  
+  }
+}
+
+// https://soatok.blog/2021/07/30/canonicalization-attacks-against-macs-and-signatures/#pae
+const LE64 = (n) => {
+    let str = '';
+    for (let i = 0; i < 8; ++i) {
+        if (i === 7) {
+            // Clear the MSB for interoperability
+            n &= 127;
+        }
+        str += String.fromCharCode(n & 255);
+        n = n >>> 8;
+    }
+    return str;
+}
+ 
+const PAE = (pieces) => {
+    if (!Array.isArray(pieces)) {
+        throw TypeError('Expected an array.');
+    }
+    const count  = pieces.length;
+    let   output = LE64(count);
+    for (let i = 0; i < count; i++) {
+        output += LE64(pieces[i].length);
+        /*** Soatok Note: 
+         This JS pseudocode incorrectly assumes strings, rather than buffers.
+         It's only meant to illustrate the idea.
+         In real implementations, don't join Buffers with +.
+         ***/
+        output += pieces[i];
+    }
+    return output;
+}
+
+const newRandPass = async () => {
+  const pass    = wrap(window.crypto.getRandomValues(new Uint8Array(16)));
+  const [s, h]  = await ndhash(pass);
+  const nps     = wrap(h);
+  const newPass = nps.replaceAll('0','#').replaceAll('o','$').replaceAll('O','!').replaceAll('1','%').replaceAll('l','^').replaceAll('/','&');
+  return newPass.substring(0,16);
+};
+
+export const reKeyPassNewUser = async (data, newPassword) => {
+  const subtle  = window.crypto.subtle;
+
+// I. Un-encrypting the "master private key"
+//   A. Derive a key from the (existing user's) password: 
+//     1. Retrieve the salt associated with this username from the server: 
+
+  let [s, h]    = await ndhash(data.password, 32, wrapString(data.username + 'VhG6X+fEw5zGGFxW')); 
+    
+  let response  = await fetch(data.endpoint + 'login', {
+                      method : "POST",
+                      body   : JSON.stringify({username: data.username, password: wrap(h)})
+                    });
+                    
+  let ret       = await response.json(); 
+  const token   = ret.token;
+  h             = undefined;
+  s             = undefined;
+  
+//     2. Derive the password-derived key: 
+  
+  let [passSalt, pKey] = await passKey(data.password, ret.passSalt);
+  
+  let ePrivKey  = ret.ePrivKey;
+  passSalt = undefined;
+  ret      = undefined;
+  response = undefined;
+
+//   B. Un-encrypt the master private key  
+
+  const haad            = aad([data.pubMaster, data.username, 'key']);
+  const wrapedPriv      = await decrypt(ePrivKey, pKey, haad, subtle);
+  
+// II. re-encrypting the "master private key" for the new user 
+//   A. Derive a key from the password:
+
+  let [newPassSalt, newPassKey] = await passKey(newPassword);
+  
+//   B. Encrypt the master private key using this new password-derived key  
+//     1. Generate hash of password to use when new user signs in
+    
+  let newSalt2    = wrapString(data.newUsername + 'VhG6X+fEw5zGGFxW');
+  let newPassHash = null;
+  [newSalt2, newPassHash] = await ndhash(newPassword, 32, newSalt2);
+  newSalt2        = undefined;
+  
+  const newUserHaad = aad([data.pubMaster, data.newUsername, 'key']);
+
+  let myEncMasterPriv = await encrypt(wrapedPriv, newPassKey, newUserHaad, subtle);  
+
+  return [newPassHash, newPassSalt, myEncMasterPriv, token];
+};
+
+export const newUserPass = async (data, newPassword) => {
+  newPassword   = newPassword || data.password;
+  const subtle  = window.crypto.subtle;
+  let [s, h]    = await ndhash(data.password, 32, wrapString(data.username + 'VhG6X+fEw5zGGFxW')); 
+    
+  let response  = await fetch(data.endpoint + 'login', {
+                      method : "POST",
+                      body   : JSON.stringify({username: data.username, password: wrap(h)})
+                    });
+                    
+  let ret       = await response.json(); 
+  
+  if ('OK' === ret.status) {
+    const token   = ret.token;
+    let passSalt  = ret.passSalt;
+    let ePrivKey  = ret.ePrivKey;
+  
+    let pKey = null;
+    [passSalt, pKey] = await passKey(data.password, passSalt);
+    passSalt = undefined;
+    
+    const haad       = aad([data.pubMaster, data.username, 'key']);
+    const wrapedPriv = await decrypt(ePrivKey, pKey, haad, subtle);
+    
+    let [newPassSalt, newPassKey] = await passKey(newPassword);
+  
+    let newSalt2    = wrapString(data.newUsername + 'VhG6X+fEw5zGGFxW');
+    let newPassHash = null;
+    [newSalt2, newPassHash] = await ndhash(newPassword, 32, newSalt2);
+    newSalt2        = undefined;
+    
+    const newUserHaad = aad([data.pubMaster, data.newUsername, 'key']);
+  
+    let newEncMasterPriv = await encrypt(wrapedPriv, newPassKey, newUserHaad, subtle);  
+  
+    response  = await fetch(data.endpoint + 'update-user', {
+                        method : "POST",
+                        body   : JSON.stringify({
+                          username    : data.username, 
+                          token       : token,
+                          newUsername : data.newUsername,
+                          newPassHash : wrap(newPassHash),
+                          newPassSalt : newPassSalt,
+                          newEncMasterPriv : newEncMasterPriv
+                        })
+                      });
+                        
+    ret       = await response.json();                   
+  
+    if ('OK' === ret.status) {
+      response = undefined;
+      return [true, token, newPassKey, newEncMasterPriv];
+    }
+    else {
+      return [false, ret.message, token];
+    }
+  
+  
+  }
+  else {
+    return [false, 'your login has expired', null];  
+  }
+}
+
+export const addUser = async (data, setData) => { 
+
+  let newPassword = await newRandPass();  
+  
+  let [newPassHash, newPassSalt, myEncMasterPriv, token] = await reKeyPassNewUser(data, newPassword);
+        
+// Send to the backend:
+  let response = await fetch(data.endpoint + 'add-user', {
+                method : "POST",
+                body   : JSON.stringify({
+                  token        : token,
+                  username     : data.username,
+                  
+                  newUsername  : data.newUsername,
+                  newUserAdmin : data.newUserAdmin,
+                  newPassSalt  : newPassSalt,
+                  newPassHash  : wrap(newPassHash),
+                  myEncMasterPriv : myEncMasterPriv
+                })
+              });
+
+    newPassSalt = undefined;
+    newPassHash = undefined;
+    myEncMasterPriv = undefined;
+    
+    let ret = await response.json();
+    if ('OK' === ret.status) {
+      // Send info to new user    
+      response  = await fetch(data.endpoint + 'send-email', {
+        method : "POST",
+        body   : JSON.stringify({
+          newUsername : data.newUsername,
+          email       : data.newUserEmail,
+          newPassword : newPassword
+        })
+      });
+      
+      ret = await response.json();
+      if ('OK' === ret.status) {
+        setData({
+          ...data,
+          newUsername  : "",
+          newUserEmail : "", 
+          newUserAdmin : false,
+          loading      : false,
+          password     : "",
+          token        : token,
+          page         : 'dashboard',         
+        });
+        
+        return null;
+      }
+      else {
+        return ['Error sending email', token];
+      }
+    }
+    else {
+      return ['Error saving new user data', token];
+    }
+};
+
+/* 
+export const makeMaster = async () => {
+  const subtle    = window.crypto.subtle;
+  const keyPair   = await genAsymmetricKey(subtle);
+  const privM     = wrapString(JSON.stringify(await subtle.exportKey('jwk', keyPair.privateKey)));
+  console.log(privM);
+  const pubM      = wrapString(JSON.stringify(await subtle.exportKey('jwk', keyPair.publicKey)));
+  console.log(pubM);
+  
+  return true;
+};
+
+export const asymmTest = async () => {
+
+  const subtle = window.crypto.subtle;
+  
+  // Steps 1-5 are done offline for the first privileged user. 
+  // for subsequent users, an existing user will add the new user's User Name and email 
+  // from there a temp password will be autogenerated and emailed to the user. 
+  // when the user changes their password, a new version of these will be generated. 
+
+  // 1. Generalte Public, Private master key pair
+  let keyPairM = await genAsymmetricKey(subtle);
+  
+  // 2. Export Private key to a string in preparation for encrypting it. 
+  let priv = JSON.stringify(await subtle.exportKey('jwk', keyPairM.privateKey));
+  
+  // 3. Generate a password-derived key 
+  let [salt1, passDerivedKey] = await passKey('Kropotkin'); 
+  
+  // 4. Generate hash of password to use in authenticating associated data
+  let [salt2, hash] = await ndhash('Kropotkin', 32);
+  
+  // 5. Encrypt the master Private key. 
+  const encPriv = await encrypt(priv, passDerivedKey, arrayBufferToString(hash), subtle);
+  
+  passDerivedKey = undefined;
+  hash    = undefined;
+  priv    = undefined; 
+
+  // The following are stored in the database, with a database key of the users User Name:
+  // encPriv, salt1, salt2
+  
+  // 6. In normal usage this public key would be retrieved from the server
+  const pub = keyPairM.publicKey;
+  keyPairM  = undefined;
+  
+  
+  // 7. Generate a keypair for saving data 
+  let keyPairU   = await genAsymmetricKey(subtle);
+  
+  // 8. Deive the key to use for encrypting the data. 
+  const derivedKey = await deriveKey(pub, keyPairU.privateKey, subtle);
+  
+  // 9. The new public key will be stored along with the encrypted data. Delete priv key. 
+  const pubU = keyPairU.publicKey;
+  keyPairU   = undefined; 
+  
+  // 10. encrypt test data with derived key
+  //     the resulting encrypted data can be saved along with the public key, pubU
+  const enc = await encrypt('test phrase', derivedKey, '', subtle);
+  
+  // theoretical break across time and space here while a privileged user signs in later
+  // to read the saved data. 
+  
+  // When the user provides their User Name, the following is 
+  // retrieved from the database: 
+  // encPriv, [their version of the encrypted master private key]
+  // salt1,   [the salt used in creating the password-derived key]
+  // salt2,   [the salt used in creating the password hash]
+  // all the encrypted data, each bit with it's own attached public key, pubU in this example
+  
+  // 11. Retrieve password-derived key 
+  const [s1, passKeyRetrieved] = await passKey('Kropotkin', salt1); 
+
+  // 12. Retrieve hash of password to use in authenticated associated data
+  const [s2, hashRetrieved] = await ndhash('Kropotkin', 32, wrap(salt2));
+  
+  // 13. Decrypt master private key as exported 'jwt' format
+  const privRetrieved = await decrypt(encPriv, passKeyRetrieved, arrayBufferToString(hashRetrieved), subtle); 
+  
+  // 14. Import the master private key into usable form 
+  const privMRetrieved = await subtle.importKey('jwk', privRetrieved, 'X25519', false, ['deriveKey',]);
+  
+  // 15. derive the actual encryption key from the provided pub key and retrieved priv key
+  const derivedKey2 = await deriveKey(pubU, privMRetrieved, subtle);
+  
+  // 16. decrypt the actual data 
+  const dec = await decrypt(enc, derivedKey2, '', subtle);
+  
+  console.log(dec);
+  // prints "test phrase"
+};
+ */
