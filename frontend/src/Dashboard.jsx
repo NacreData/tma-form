@@ -226,9 +226,7 @@ function Dashboard() {
         data.username,
         ret.content
       );
-      
-      console.log(note);
-      
+            
       const noteUsername = users.reduce((a, u) => {
         console.log(u.id);
         console.log(note.user);

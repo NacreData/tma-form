@@ -121,21 +121,6 @@ const aad = (input) => {
   );
 };
 
-/*
-export const passEncryptPrivate = async (pass, username, priv, pubMaster) => {
-  let [passSalt, pKey]  = await passKey(pass);
-  const haad            = aad([pubMaster, username, 'key']);
-  const subtle          = window.crypto.subtle;
-  const passEncPrivKey  = await encrypt(priv, pKey, haad, subtle);
-  
-  pKey = undefined;
-  priv = undefined;
-  
-//   console.log(`password Salt: ${passSalt}`);
-//   console.log(`encrypted Private Key: ${passEncPrivKey}`);
-};
-*/
-
 export const passDecryptPrivate = async (ePrivKey, pkey, pubMaster, username, extractable=false) => {   
   const haad            = aad([pubMaster, username, 'key']);
   const subtle          = window.crypto.subtle;
@@ -235,6 +220,7 @@ export const encryptSubmission = async (data, setData) => {
 };
 
 export const postNote = async (ts, data, setData) => {
+  // this becomes the "extra information" included in the encryption
   const haad      = aad([data.pubMaster, 'note']);
   
   const subtle    = window.crypto.subtle;
@@ -253,8 +239,8 @@ export const postNote = async (ts, data, setData) => {
   
   const now       = Date.now() * 1000;
   
+  // These two lines just update where the note appears on the frontend
   data.subdata[ts].notes[now] = {content: newNote, user: data.username, timestamp: now};
-  
   data.subdata[ts].newNote = "";
   
   const dataStr   = JSON.stringify({note: newNote, user: data.userID});
